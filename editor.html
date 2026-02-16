@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Sheep Run — Editor (publish JSON)</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --primary:#00E5FF;
+      --accent:#FF4081;
+      --glass:rgba(255,255,255,0.95);
+      --dark:#121212;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:'Montserrat',sans-serif;
+      background: radial-gradient(circle at center, #2a003b 0%, #000000 100%);
+      color:#222;
+      padding:28px 14px;
+      min-height:100vh;
+    }
+    .bg-sheep{
+      position:fixed; font-size:46px; opacity:.25; z-index:-1;
+      animation: floatSpace 22s infinite linear;
+    }
+    @keyframes floatSpace{
+      0%{transform:translateY(110vh) rotate(0deg)}
+      100%{transform:translateY(-10vh) rotate(360deg)}
+    }
+    .wrap{
+      max-width:1100px; margin:0 auto;
+      background:var(--glass);
+      border-radius:18px;
+      border:2px solid rgba(255,255,255,0.1);
+      box-shadow:0 0 18px var(--primary), 0 0 60px rgba(0,229,255,.18);
+      padding:20px;
+    }
+    h1{
+      margin:0 0 10px;
+      font-family:'Fredoka One',cursive;
+      font-size:40px;
+      text-align:center;
+      text-shadow:2px 2px 0 var(--primary);
+    }
+    .sub{
+      text-align:center;
+      color:#444;
+      margin-bottom:18px;
+      font-size:13px;
+      opacity:.9;
+    }
+    .topbar{
+      display:flex; gap:12px; flex-wrap:wrap;
+      justify-content:space-between; align-items:center;
+      margin-bottom:12px;
+    }
+    .pill{
+      display:flex; gap:10px; flex-wrap:wrap;
+      align-items:center;
+      background:rgba(255,255,255,.6);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:999px;
+      padding:8px 10px;
+    }
+    label{font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#444}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px}
+    .card{
+      background:rgba(255,255,255,.6);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:14px;
+      padding:14px;
+      margin:12px 0;
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size:16px;
+      display:flex; align-items:center; gap:10px;
+      border-bottom:2px solid var(--primary);
+      padding-bottom:8px;
+    }
+    input[type=text], textarea, select{
+      width:100%;
+      padding:10px;
+      border-radius:10px;
+      border:2px solid #ddd;
+      font-family:'Montserrat',sans-serif;
+      outline:none;
+      transition:.2s;
+      background:white;
+      font-size:14px;
+    }
+    textarea{min-height:140px; resize:vertical; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    input:focus, textarea:focus, select:focus{
+      border-color:var(--primary);
+      box-shadow:0 0 10px rgba(0,229,255,.25);
+    }
+    .help{font-size:12px; color:#555; opacity:.9; margin-top:6px}
+    .btn2{
+      border:none;
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      background:#222;
+      color:#fff;
+      font-weight:800;
+    }
+    .btn2.alt{background:#444}
+    .out{
+      background:#1f232a;
+      color:#00E5FF;
+      border-radius:12px;
+      padding:12px;
+      border:2px solid rgba(255,255,255,.12);
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      word-break:break-all;
+      white-space:pre-wrap;
+      max-height:260px;
+      overflow:auto;
+    }
+    .previewBox{
+      background:rgba(0,0,0,.08);
+      border:1px dashed rgba(0,0,0,.2);
+      border-radius:14px;
+      padding:10px;
+    }
+    .previewFrame{
+      width:100%;
+      height:520px;
+      border:0;
+      border-radius:12px;
+      background:transparent;
+      display:block;
+    }
+    .emojiBar{
+      display:flex; flex-wrap:wrap; gap:8px;
+      margin-top:8px;
+    }
+    .emojiBtn{
+      width:36px; height:36px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.15);
+      background:white;
+      cursor:pointer;
+      font-size:20px;
+      display:flex; align-items:center; justify-content:center;
+      transition:.1s;
+    }
+    .emojiBtn:hover{transform:translateY(-1px)}
+    .footer{
+      text-align:center;
+      margin-top:18px;
+      color:rgba(255,255,255,.65);
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
+    .statusPill{
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(0,0,0,.08);
+      border:1px solid rgba(0,0,0,.12);
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-sheep" style="left:10%; animation-duration: 26s;">🐑</div>
+  <div class="bg-sheep" style="left:80%; animation-duration: 30s; animation-delay:-7s;">🚀</div>
+  <div class="bg-sheep" style="left:30%; animation-duration: 22s; animation-delay:-12s;">🪐</div>
+  <div class="bg-sheep" style="left:60%; animation-duration: 28s; animation-delay:-3s;">👾</div>
+
+  <div class="wrap">
+    <h1>🐑 SHEEP RUN <span style="font-size:16px; color:var(--accent)">// EDITOR publish JSON</span></h1>
+    <div class="sub">
+      Публикация как в твоих референсах: JSON кладётся в <b>/data/</b>, а Genially получает iframe на <b>main.html?id=...</b>
+    </div>
+
+    <div class="topbar">
+      <div class="pill">
+        <label>Язык</label>
+        <select id="uiLang">
+          <option value="ru" selected>Русский</option>
+          <option value="en">English</option>
+        </select>
+
+        <label style="margin-left:10px">Режим</label>
+        <select id="gameMode">
+          <option value="choice" selected>Кнопки (A/B)</option>
+          <option value="input">Вписать ответ</option>
+        </select>
+
+        <label style="margin-left:10px; display:flex; align-items:center; gap:8px; font-size:12px; text-transform:uppercase; letter-spacing:.08em;">
+          <input type="checkbox" id="mathMode" style="width:18px; height:18px;">
+          <span>MathJax</span>
+        </label>
+
+        <label style="margin-left:10px; display:flex; align-items:center; gap:8px; font-size:12px; text-transform:uppercase; letter-spacing:.08em;">
+          <input type="checkbox" id="transparentBg" style="width:18px; height:18px;">
+          <span>Прозрачный фон</span>
+        </label>
+
+        <label style="margin-left:10px; display:flex; align-items:center; gap:8px; font-size:12px; text-transform:uppercase; letter-spacing:.08em;">
+          <input type="checkbox" id="mirrorHero" style="width:18px; height:18px;">
+          <span>Отразить персонажа</span>
+        </label>
+
+        <label style="margin-left:10px; display:flex; align-items:center; gap:8px; font-size:12px; text-transform:uppercase; letter-spacing:.08em;">
+          <input type="checkbox" id="randomQuestions" style="width:18px; height:18px;" checked>
+          <span>Рандом вопросов</span>
+        </label>
+      </div>
+
+      <div class="pill">
+        <span class="statusPill" id="statusPill">Готово</span>
+        <button class="btn2" onclick="refreshPreview()">ПРЕВЬЮ</button>
+        <button class="btn2 alt" onclick="publish()">ОПУБЛИКОВАТЬ</button>
+        <button class="btn2 alt" onclick="copyIframe()">Скопировать iframe</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🧩 Тексты интерфейса</h2>
+      <div class="grid3">
+        <div><label>Название</label><input id="ui_title" type="text" value="SHEEP RUN"></div>
+        <div><label>Кнопка Старт</label><input id="ui_start" type="text" value="PLAY"></div>
+        <div><label>Кнопка Повтор</label><input id="ui_again" type="text" value="AGAIN"></div>
+        <div><label>Game Over</label><input id="ui_over" type="text" value="GAME OVER"></div>
+        <div><label>Подпись счёта</label><input id="ui_score" type="text" value="Score: "></div>
+        <div>
+          <label>Порог победы (вопросов)</label>
+          <input id="winQuestions" type="text" value="10">
+          <div class="help">Сколько вопросов нужно пройти до победы (если вопросов меньше — победа по факту конца списка).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎨 Ассеты</h2>
+      <div class="help">Герой/объекты: эмодзи или ссылка на картинку/гиф (https://...). Списки — по строкам или через запятую.</div>
+
+      <div class="grid2">
+        <div>
+          <label>Герой</label>
+          <input id="hero" type="text" value="🐑">
+          <div class="emojiBar" id="heroEmojiBar"></div>
+        </div>
+        <div>
+          <label>Быстрые эмодзи</label>
+          <div class="help">Нажми — вставится в активное поле.</div>
+          <div class="emojiBar" id="commonEmojiBar"></div>
+        </div>
+      </div>
+
+      <div class="grid3" style="margin-top:10px">
+        <div>
+          <label>Препятствия (земля)</label>
+          <textarea id="obs_ground">🌲,🪨,🪵,🌵</textarea>
+        </div>
+        <div>
+          <label>Хорошие (летят)</label>
+          <textarea id="obs_good">🌾,🌽,🍀,🍎</textarea>
+        </div>
+        <div>
+          <label>Плохие (летят)</label>
+          <textarea id="obs_bad">🦅,🧱,🚁,⛈️</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🔊 Музыка и звуки (URL)</h2>
+      <div class="grid3">
+        <div><label>Music</label><input id="aud_mus" type="text" value=""></div>
+        <div><label>Ding</label><input id="aud_ding" type="text" value=""></div>
+        <div><label>Buzz</label><input id="aud_buzz" type="text" value=""></div>
+        <div><label>Coin</label><input id="aud_coin" type="text" value=""></div>
+        <div><label>Crash</label><input id="aud_crash" type="text" value=""></div>
+        <div><label>Win</label><input id="aud_win" type="text" value=""></div>
+      </div>
+      <div class="help">Нужны прямые ссылки на mp3/ogg. Музыка стартует строго после клика START (иначе браузер блочит).</div>
+    </div>
+
+    <div class="card">
+      <h2>📝 Задания (3 столбца)</h2>
+      <div class="help">
+        Вставляй из Excel: строки совпадают по индексу.
+        <br>• <b>choice</b>: Question + Correct + Wrong
+        <br>• <b>input</b>: Question + Correct (Wrong игнорируется), Correct может быть "a|b|c"
+      </div>
+      <div class="grid3">
+        <div>
+          <label>Вопрос (A)</label>
+          <textarea id="q_col" placeholder="Dog ___ fast.&#10;Cat ___ milk."></textarea>
+        </div>
+        <div>
+          <label>Верно (B)</label>
+          <textarea id="c_col" placeholder="runs&#10;drinks"></textarea>
+        </div>
+        <div>
+          <label>Неверно (C)</label>
+          <textarea id="w_col" placeholder="run&#10;drink"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>✅ Выход (iframe для Genially)</h2>
+      <div class="help">После публикации тут появится iframe. Нажми “Скопировать iframe”.</div>
+      <div id="output" class="out"></div>
+    </div>
+
+    <div class="card">
+      <h2>👀 Предпросмотр</h2>
+      <div class="previewBox">
+        <iframe id="preview" class="previewFrame" allow="autoplay" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">© 2026 КОРПОРАЦИЯ ГЕЙМИФИКАЦИИ БУДУЩЕГО</div>
+
+<script>
+  // === НАСТРОЙ ДЛЯ ТВОЕГО РЕПО ===
+  // Движок будет лежать: https://nikashum93.github.io/puk/main.html
+  // JSON будет лежать:   https://nikashum93.github.io/puk/data/<id>.json
+  const BASE_MAIN = "https://nikashum93.github.io/puk/main.html";
+
+  // === КАК В ТВОИХ РЕФЕРЕНСАХ (edit(7).html) ===
+  // Если хочешь другой сервер/ключ — скажешь, заменю.
+  const ENDPOINT    = "https://server-kjnn.onrender.com/publish";
+  const PUBLISH_KEY = "nika_read_pub_2025";
+
+  const $ = (id)=>document.getElementById(id);
+
+  let lastFocusedEl = null;
+  document.addEventListener('focusin', (e)=>{
+    const el = e.target;
+    if(el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) lastFocusedEl = el;
+  });
+
+  function insertAtCursor(text){
+    const el = lastFocusedEl;
+    if(!el) return;
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? el.value.length;
+    el.value = el.value.slice(0,start) + text + el.value.slice(end);
+    el.focus();
+    el.selectionStart = el.selectionEnd = start + text.length;
+  }
+
+  function parseList(val){
+    return String(val).split(/[\n,]+/).map(s=>s.trim()).filter(Boolean);
+  }
+  function parseLines(val){
+    return String(val).split('\n').map(s=>s.replace(/\r/g,''));
+  }
+
+  const HERO_EMO = ["🐑","🐐","🦙","🐕","🐈","🦊","🐉","🤖","🧙‍♀️","🧙‍♂️"];
+  const COMMON_EMO = ["🌲","🪨","🪵","🌵","🌾","🌽","🍀","🍎","🌟","💎","🦅","🧱","🚁","⛈️","🔥","💥","🧲","🧪","🧠","📦"];
+
+  function mountEmojiBars(){
+    const heroBar = $('heroEmojiBar');
+    HERO_EMO.forEach(e=>{
+      const b = document.createElement('button');
+      b.className='emojiBtn'; b.type='button'; b.textContent=e;
+      b.onclick=()=>{ $('hero').focus(); insertAtCursor(e); };
+      heroBar.appendChild(b);
+    });
+
+    const commonBar = $('commonEmojiBar');
+    COMMON_EMO.forEach(e=>{
+      const b = document.createElement('button');
+      b.className='emojiBtn'; b.type='button'; b.textContent=e;
+      b.onclick=()=>insertAtCursor(e);
+      commonBar.appendChild(b);
+    });
+  }
+
+  function makeIdFromTitle(cfg){
+    const base = (cfg?.ui?.title || cfg?.tasks?.[0]?.question || 'sheep-run').toString().trim();
+    const slug = base.toLowerCase()
+      .normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')
+      .slice(0,40) || 'sheep-run';
+    const d=new Date(),p=n=>String(n).padStart(2,'0');
+    const stamp = `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+    return `${slug}-${stamp}`;
+  }
+
+  function collectConfig(){
+    const mode = $('gameMode').value;
+    const math = $('mathMode').checked;
+    const transparentBg = $('transparentBg').checked;
+    const mirrorHero = $('mirrorHero').checked;
+    const randomQuestions = $('randomQuestions').checked;
+
+    const ui = {
+      title: ($('ui_title').value || 'SHEEP RUN').trim(),
+      start: ($('ui_start').value || 'PLAY').trim(),
+      again: ($('ui_again').value || 'AGAIN').trim(),
+      gameover: ($('ui_over').value || 'GAME OVER').trim(),
+      scoreLabel: ($('ui_score').value || 'Score: ').trim()
+    };
+
+    const winQuestions = parseInt(($('winQuestions').value || '10'), 10);
+    const gameplay = {
+      winQuestions: Number.isFinite(winQuestions) ? Math.max(1, winQuestions) : 10
+    };
+
+    const assets = {
+      hero: ($('hero').value || '🐑').trim(),
+      mirrorHero,
+      obstacles: {
+        ground: parseList($('obs_ground').value),
+        good: parseList($('obs_good').value),
+        bad: parseList($('obs_bad').value)
+      }
+    };
+
+    const sounds = {
+      mus: $('aud_mus').value.trim(),
+      ding: $('aud_ding').value.trim(),
+      buzz: $('aud_buzz').value.trim(),
+      coin: $('aud_coin').value.trim(),
+      crash: $('aud_crash').value.trim(),
+      win: $('aud_win').value.trim(),
+    };
+
+    const qLines = parseLines($('q_col').value);
+    const cLines = parseLines($('c_col').value);
+    const wLines = parseLines($('w_col').value);
+
+    const tasks = [];
+    const n = Math.max(qLines.length, cLines.length, wLines.length);
+    for(let i=0;i<n;i++){
+      const question = (qLines[i]||'').trim();
+      const correctRaw = (cLines[i]||'').trim();
+      const wrongRaw   = (wLines[i]||'').trim();
+
+      if(!question && !correctRaw && !wrongRaw) continue;
+
+      const correct = correctRaw ? correctRaw.split('|').map(s=>s.trim()).filter(Boolean) : [];
+      const wrong   = wrongRaw   ? wrongRaw.split('|').map(s=>s.trim()).filter(Boolean)   : [];
+
+      tasks.push({ question: question || '...', correct, wrong });
+    }
+
+    return {
+      lang: $('uiLang').value,
+      mode,
+      math,
+      transparentBg,
+      randomQuestions,
+      ui,
+      gameplay,
+      assets,
+      sounds,
+      tasks
+    };
+  }
+
+  function validate(cfg){
+    if(!cfg.tasks || !cfg.tasks.length) return 'Добавь хотя бы 1 строку вопроса.';
+    if(cfg.mode === 'input'){
+      const bad = cfg.tasks.findIndex(t => !t.correct || !t.correct.length);
+      if(bad !== -1) return `Режим "Вписать ответ": в строке ${bad+1} нет правильного ответа (столбец B).`;
+    }
+    if(cfg.mode === 'choice'){
+      const bad = cfg.tasks.findIndex(t => !t.correct || !t.correct.length || !t.wrong || !t.wrong.length);
+      if(bad !== -1) return `Режим "Кнопки": в строке ${bad+1} нужны и correct (B), и wrong (C).`;
+    }
+    return null;
+  }
+
+  function buildPreviewUrlDoc(cfg){
+    // Превью: просто открываем main.html с srcdoc подсовываем, но main.html тут нет.
+    // Поэтому делаем "мини-main" прямо тут (упрощённо): iframe на BASE_MAIN и постMessage cfg.
+    // Но чтобы вообще без плясок: используем srcdoc с loader, который сохраняет cfg в sessionStorage
+    // и грузит BASE_MAIN?local=1. main.html это поддержит.
+    const payload = JSON.stringify(cfg).replaceAll('<','\\u003c').replaceAll('>','\\u003e').replaceAll('&','\\u0026');
+
+    return `<!doctype html><html><head><meta charset="utf-8"></head>
+<body style="margin:0;background:transparent;">
+<script>
+  sessionStorage.setItem('__sheep_cfg__', ${payload});
+  location.href = ${JSON.stringify(BASE_MAIN + '?local=1')};
+<\/script>
+</body></html>`;
+  }
+
+  function refreshPreview(){
+    const cfg = collectConfig();
+    const err = validate(cfg);
+    if(err){
+      $('statusPill').textContent = 'Ошибка';
+    } else {
+      $('statusPill').textContent = 'Готово';
+    }
+    $('preview').srcdoc = buildPreviewUrlDoc(cfg);
+  }
+
+  async function publish(){
+    $('statusPill').textContent = 'Публикую…';
+
+    const cfg = collectConfig();
+    const err = validate(cfg);
+    if(err){
+      alert(err);
+      $('statusPill').textContent = 'Ошибка';
+      return;
+    }
+
+    const id = makeIdFromTitle(cfg);
+    const payload = {
+      id,
+      mode: "json",
+      folder: "data",
+      content: JSON.stringify(cfg, null, 2)
+    };
+
+    try{
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Publish-Key": PUBLISH_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if(!res.ok){
+        const t = await res.text().catch(()=>res.statusText);
+        throw new Error(t || 'Server error');
+      }
+
+      const iframe =
+`<iframe
+  src="${BASE_MAIN}?id=${encodeURIComponent(id)}"
+  width="100%"
+  height="650"
+  style="border:0;display:block;background:transparent;"
+  allow="autoplay; fullscreen"
+  sandbox="allow-scripts allow-same-origin allow-forms"
+></iframe>`;
+
+      $('output').textContent = iframe;
+      $('statusPill').textContent = 'Готово ✅';
+      alert('Опубликовано! Подожди 30–60 секунд, чтобы GitHub Pages подтянул JSON.');
+    }catch(e){
+      $('statusPill').textContent = 'Сеть/ошибка';
+      alert("Сеть/сервер: " + e.message);
+    }
+  }
+
+  function copyIframe(){
+    const v = ($('output').textContent || '').trim();
+    if(!v){ alert('Сначала опубликуй, чтобы получить iframe.'); return; }
+    navigator.clipboard.writeText(v).then(()=>{}).catch(()=>{});
+  }
+
+  // init
+  mountEmojiBars();
+  document.addEventListener('input', (e)=>{
+    if(e.target && e.target.closest('.wrap')) refreshPreview();
+  });
+
+  // автозаполнение UI полей при смене языка (как у тебя)
+  $('uiLang').addEventListener('change', ()=>{
+    const lang = $('uiLang').value;
+    if(lang === 'ru'){
+      if($('ui_start').value.toUpperCase() === 'PLAY') $('ui_start').value = 'ИГРАТЬ';
+      if($('ui_again').value.toUpperCase() === 'AGAIN') $('ui_again').value = 'ЕЩЁ РАЗ';
+      if($('ui_over').value.toUpperCase() === 'GAME OVER') $('ui_over').value = 'ИГРА ОКОНЧЕНА';
+      if($('ui_score').value.startsWith('Score')) $('ui_score').value = 'Счёт: ';
+    } else {
+      if($('ui_start').value === 'ИГРАТЬ') $('ui_start').value = 'PLAY';
+      if($('ui_again').value.startsWith('Е')) $('ui_again').value = 'AGAIN';
+      if($('ui_over').value.startsWith('И')) $('ui_over').value = 'GAME OVER';
+      if($('ui_score').value.startsWith('С')) $('ui_score').value = 'Score: ';
+    }
+    refreshPreview();
+  });
+
+  refreshPreview();
+</script>
+</body>
+</html>
