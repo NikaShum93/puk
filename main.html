@@ -101,7 +101,19 @@
     }
     @keyframes float-up{ 0%{transform:translateY(0);opacity:1;} 100%{transform:translateY(-100px);opacity:0;} }
 
-    /* OVERLAYS */
+    
+        /* choice 4 layout */
+        .choice4-panel{
+            width:100%;
+            display:grid;
+            grid-template-columns: 1fr 1fr;
+            gap:16px;
+            justify-items:stretch;
+            align-items:center;
+        }
+        .choice4-panel .action-btn{ width:100%; padding:16px 18px; }
+
+        /* OVERLAYS */
     .overlay{
       position:absolute; inset:0; z-index:200;
       background:#4FC3F7;
@@ -189,7 +201,7 @@
 
     .action-btn{
       background:#FFEB3B; color:#E65100;
-      font-size:8vmin;
+      font-size: var(--btnSize);
       padding:20px 80px;
       border-radius:60px;
       border:none;
@@ -294,10 +306,18 @@
   </div>
 
   <div id="ground-area">
-    <!-- choice mode -->
+    <!-- choice mode (2) -->
     <div id="choicePanel" style="display:flex; gap:30px;">
       <button id="btn-left" class="action-btn">A</button>
       <button id="btn-right" class="action-btn">B</button>
+    </div>
+
+    <!-- choice mode (4) -->
+    <div id="choice4Panel" class="choice4-panel" style="display:none;">
+      <button id="btn-a" class="action-btn">A</button>
+      <button id="btn-b" class="action-btn">B</button>
+      <button id="btn-c" class="action-btn">C</button>
+      <button id="btn-d" class="action-btn">D</button>
     </div>
 
     <!-- input mode -->
@@ -380,7 +400,7 @@
       mirrorHero: false,
       obstacles: { ground:['🌲'], good:['🌟'], bad:['🦅'] }
     },
-    sounds: { mus:'https://assets.mixkit.co/active_storage/stock_music/96/96-preview.mp3', ding:'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3', buzz:'https://assets.mixkit.co/active_storage/sfx/257/257-preview.mp3', coin:'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3', crash:'https://assets.mixkit.co/active_storage/sfx/2042/2042-preview.mp3', win:'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3' },
+    sounds: { mus:'https://raw.githubusercontent.com/kgbgamelab/audioplayer/main/Baa%20Dash.mp3', ding:'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3', buzz:'https://assets.mixkit.co/active_storage/sfx/257/257-preview.mp3', coin:'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3', crash:'https://assets.mixkit.co/active_storage/sfx/2042/2042-preview.mp3', win:'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3' },
     tasks: []
   };
 
@@ -536,14 +556,28 @@
     document.getElementById('btnStart').textContent = (CFG.ui?.start || 'START');
     document.getElementById('btnAgain').textContent = (CFG.ui?.again || 'AGAIN');
 
+    // apply text size (vmin)
+    const uiFont = parseFloat(CFG.ui?.fontSize || '');
+    if(Number.isFinite(uiFont) && uiFont > 0){
+      document.documentElement.style.setProperty('--qSize',  uiFont+'vmin');
+      document.documentElement.style.setProperty('--btnSize',uiFont+'vmin');
+    }else{
+      const scale = parseFloat(CFG.ui?.fontScale || '1');
+      if(Number.isFinite(scale) && scale>0){
+        document.documentElement.style.setProperty('--qSize',  (8*scale)+'vmin');
+        document.documentElement.style.setProperty('--btnSize',(8*scale)+'vmin');
+      }
+    }
+
     // mode panels
     const mode = CFG.mode || 'choice';
-    document.getElementById('choicePanel').style.display = (mode === 'choice') ? 'flex' : 'none';
-    document.getElementById('inputPanel').style.display  = (mode === 'input')  ? 'flex' : 'none';
+    document.getElementById('choicePanel').style.display  = (mode === 'choice')  ? 'flex' : 'none';
+    document.getElementById('choice4Panel').style.display = (mode === 'choice4') ? 'grid' : 'none';
+    document.getElementById('inputPanel').style.display   = (mode === 'input')   ? 'flex' : 'none';
 
     // sounds urls
     const setSrc = (el, url)=>{ el.src = url || ''; try{ el.load(); }catch(e){} };
-    setSrc(document.getElementById('mus-bg'),      CFG.sounds?.mus);
+    setSrc(document.getElementById('mus-bg'),      (CFG.sounds?.mus || 'https://raw.githubusercontent.com/kgbgamelab/audioplayer/main/Baa%20Dash.mp3'));
     setSrc(document.getElementById('sfx-ding'),    CFG.sounds?.ding);
     setSrc(document.getElementById('sfx-buzz'),    CFG.sounds?.buzz);
     setSrc(document.getElementById('sfx-coin'),    CFG.sounds?.coin);
@@ -748,15 +782,20 @@
       this.qOrder = (CFG.tasks || []).map((t,idx)=>idx);
       if(CFG.randomQuestions) this.qOrder = shuffle(this.qOrder);
       this.qIndex = 0;
+      this.obstaclesPassed = 0;
+      this.answerAccepted = false;
+      this.choiceLocked = false;
 
       // panels
       const mode = CFG.mode || 'choice';
-      document.getElementById('choicePanel').style.display = (mode==='choice') ? 'flex' : 'none';
-      document.getElementById('inputPanel').style.display  = (mode==='input')  ? 'flex' : 'none';
+      document.getElementById('choicePanel').style.display  = (mode==='choice') ? 'flex' : 'none';
+      document.getElementById('choice4Panel').style.display = (mode==='choice4') ? 'grid' : 'none';
+      document.getElementById('inputPanel').style.display   = (mode==='input')  ? 'flex' : 'none';
 
       // bind controls
-      document.getElementById('btn-left').onclick  = ()=>this.handleChoice(0);
-      document.getElementById('btn-right').onclick = ()=>this.handleChoice(1);
+      document.getElementById('btn-left').onclick  = ()=>this.handleChoiceBtn(document.getElementById('btn-left'));
+      document.getElementById('btn-right').onclick = ()=>this.handleChoiceBtn(document.getElementById('btn-right'));
+      ['a','b','c','d'].forEach(k=>{ const el=document.getElementById('btn-'+k); if(el) el.onclick=()=>this.handleChoiceBtn(el); });
       document.getElementById('btnOk').onclick = ()=>this.handleInputOk();
       document.getElementById('answerInput').onkeydown = (e)=>{ if(e.key === 'Enter') this.handleInputOk(); };
 
@@ -835,6 +874,13 @@
         const oT=oR.top+oR.height*0.3;
         const oB=oR.bottom-oR.height*0.1;
 
+        // obstacle passed (ground) -> next question
+        if(obj.dataset.isObstacle === "true" && !obj.dataset.passed && oR.right < hX){
+          obj.dataset.passed = "true";
+          this.onObstaclePassed();
+        }
+
+
         if(hX < oX + oW && hX + hW > oX && hT < oB && hB > oT){
           const centerX=oR.left+oR.width/2;
           const centerY=oR.top;
@@ -854,6 +900,34 @@
           this.updateUI();
         }
       });
+    },
+
+    onObstaclePassed(){
+      // advance question only when an obstacle passed the hero
+      this.obstaclesPassed = (this.obstaclesPassed || 0) + 1;
+
+      // unlock input / buttons
+      this.answerAccepted = false;
+      this.choiceLocked = false;
+
+      if((CFG.mode||'choice') === 'input'){
+        const inp=document.getElementById('answerInput');
+        inp.disabled = false;
+        document.getElementById('btnOk').disabled = false;
+        inp.value = '';
+        inp.focus();
+      }else{
+        ['btn-left','btn-right','btn-a','btn-b','btn-c','btn-d'].forEach(id=>{
+          const b=document.getElementById(id); if(b) b.disabled = false;
+        });
+      }
+
+      this.qIndex++;
+      this.nextQuestion();
+
+      const need = Math.max(1, CFG.gameplay?.winQuestions || 10);
+      if(this.obstaclesPassed >= need) this.gameOver(true);
+      this.updateUI();
     },
 
     hurt(){
@@ -894,12 +968,17 @@
       qt.textContent = task.question || '...';
       typesetMaybe(qt);
 
-      if((CFG.mode||'choice') === 'choice'){
+      const mode = (CFG.mode||'choice');
+
+      if(mode === 'choice'){
         const correct = (task.correct && task.correct[0]) ? task.correct[0] : 'OK';
         const wrong   = (task.wrong && task.wrong[0]) ? task.wrong[0] : 'NO';
 
         const bL=document.getElementById('btn-left');
         const bR=document.getElementById('btn-right');
+
+        // reset lock
+        bL.disabled = false; bR.disabled=false;
 
         if(Math.random()>0.5){
           bL.textContent = correct; bL.dataset.correct="true";
@@ -908,21 +987,39 @@
           bL.textContent = wrong;   bL.dataset.correct="false";
           bR.textContent = correct; bR.dataset.correct="true";
         }
+      }else if(mode === 'choice4'){
+        const correct = (task.correct && task.correct[0]) ? task.correct[0] : 'OK';
+        const wrongPool = (task.wrong && task.wrong.length) ? task.wrong.slice() : ['NO','NOPE','WRONG'];
+        while(wrongPool.length < 3) wrongPool.push(wrongPool[wrongPool.length-1] || 'NO');
+
+        const opts = [correct, wrongPool[0], wrongPool[1], wrongPool[2]];
+        const shuffled = shuffle(opts.map((t,i)=>({t, ok: i===0})));
+        const ids = ['btn-a','btn-b','btn-c','btn-d'];
+        ids.forEach((id, i)=>{
+          const b=document.getElementById(id);
+          if(!b) return;
+          b.disabled=false;
+          b.textContent = shuffled[i].t;
+          b.dataset.correct = shuffled[i].ok ? "true" : "false";
+        });
       }else{
         const inp = document.getElementById('answerInput');
-        inp.value = '';
+        // keep user's text unless we are switching task; we do clear on obstacle passed
+        if(!this.answerAccepted) inp.value = '';
+        inp.disabled = false;
+        document.getElementById('btnOk').disabled = false;
         inp.focus();
       }
 
       this.updateUI();
     },
 
-    handleChoice(side){
+    handleChoiceBtn(btn){
       if(!this.isPlaying) return;
-      const btn = (side===0) ? document.getElementById('btn-left') : document.getElementById('btn-right');
-      const ok = btn.dataset.correct === "true";
+      if(this.choiceLocked) return;
+      if(!btn) return;
 
-      if(ok){
+      if(btn.dataset.correct === "true"){
         this.onAnswerCorrect();
       }else{
         AudioSys.play('buzz');
@@ -951,6 +1048,8 @@
     },
 
     onAnswerCorrect(){
+      if(this.answerAccepted) return;
+
       if(!this.elHero.classList.contains('jump-anim')){
         this.elHero.classList.add('jump-anim');
         setTimeout(()=>this.elHero.classList.remove('jump-anim'), 1000);
@@ -959,12 +1058,20 @@
       this.score += Math.floor(200*this.combo);
       this.combo = Math.min(this.combo + 0.5, 5.0);
 
-      this.qIndex++;
-      this.obstaclesPassed = this.qIndex;
-      this.nextQuestion();
+      // lock until obstacle passes
+      this.answerAccepted = true;
+      this.choiceLocked = true;
 
-      const need = Math.max(1, CFG.gameplay?.winQuestions || 10);
-      if(this.qIndex >= need) this.gameOver(true);
+      // in input mode keep the typed answer, just disable submit
+      if((CFG.mode||'choice') === 'input'){
+        document.getElementById('btnOk').disabled = true;
+        document.getElementById('answerInput').disabled = true;
+      }else{
+        // disable all choice buttons
+        ['btn-left','btn-right','btn-a','btn-b','btn-c','btn-d'].forEach(id=>{
+          const b=document.getElementById(id); if(b) b.disabled = true;
+        });
+      }
     },
 
     updateUI(){
