@@ -1,13 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Sheep Run — Редактор</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
-
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Sheep Run — Редактор</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&amp;family=Montserrat:wght@400;700;900&amp;display=swap" rel="stylesheet"/>
+<style>
     :root{
       --primary:#00E5FF;
       --accent:#FF4081;
@@ -16,75 +15,127 @@
       --bg1:#2a003b;
       --bg2:#000;
       --stroke:rgba(0,0,0,.08);
+      --panel:rgba(255,255,255,.70);
     }
     *{box-sizing:border-box}
     body{
       margin:0;
       font-family:'Montserrat',sans-serif;
       background: radial-gradient(circle at center, var(--bg1) 0%, var(--bg2) 100%);
-      padding:28px 14px;
+      padding:22px 14px;
       min-height:100vh;
       color:#222;
     }
-    .bg-float{
-      position:fixed; font-size:46px; opacity:.25; z-index:-1;
-      animation: floatSpace 22s infinite linear;
-      pointer-events:none;
-    }
-    @keyframes floatSpace{
-      0%{transform:translateY(110vh) rotate(0deg)}
-      100%{transform:translateY(-10vh) rotate(360deg)}
-    }
+    .bg-float{position:fixed;font-size:46px;opacity:.18;z-index:-1;animation:floatSpace 24s infinite linear}
+    @keyframes floatSpace{0%{transform:translateY(110vh) rotate(0deg)}100%{transform:translateY(-10vh) rotate(360deg)}}
 
     .wrap{
-      max-width:1250px; margin:0 auto;
+      max-width:1200px;
+      margin:0 auto;
       background:var(--glass);
-      border-radius:18px;
-      border:2px solid rgba(255,255,255,0.1);
+      border-radius:22px;
+      border:2px solid rgba(255,255,255,0.12);
       box-shadow:0 0 18px var(--primary), 0 0 60px rgba(0,229,255,.18);
-      padding:18px;
-    }
-    header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:14px;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-    }
-    .brand{
-      display:flex; align-items:center; gap:12px;
-    }
-    .brand h1{
-      margin:0;
-      font-family:'Fredoka One',cursive;
-      font-size:38px;
-      text-shadow:2px 2px 0 var(--primary);
-      line-height:1;
-    }
-    .brand .mini{
-      font-weight:900;
-      color:var(--accent);
-      font-size:12px;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      margin-top:6px;
+      overflow:hidden;
     }
 
-    .layout{
+    /* Top header */
+    .header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 18px 12px;
+      background:linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.65));
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    .brand{display:flex; align-items:center; gap:12px}
+    .logoWrap{width:44px;height:44px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;
+      border:1px solid rgba(0,0,0,.08); box-shadow:0 10px 25px rgba(0,0,0,.08);
+      font-size:26px;
+    }
+    h1{margin:0;font-family:'Fredoka One',cursive;font-size:34px;letter-spacing:.02em}
+    .mini{margin-top:2px;font-size:12px;color:#444;opacity:.9;font-weight:700}
+    .by{margin-top:2px;font-size:12px;color:#666;opacity:.9}
+    .headerRight{display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end}
+    label{font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#444}
+    select,input[type=text],textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:2px solid #ddd;
+      font-family:'Montserrat',sans-serif;
+      outline:none;
+      transition:.2s;
+      background:white;
+      font-size:14px;
+    }
+    textarea{min-height:120px; resize:vertical; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    select:focus,input:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 10px rgba(0,229,255,.22)}
+    .statusPill{
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.08);
+      font-weight:900;
+      font-size:13px;
+      color:#333;
+      min-width:110px;
+      text-align:center;
+    }
+
+    .main{
       display:grid;
       grid-template-columns: 420px 1fr;
       gap:14px;
-      align-items:start;
+      padding:14px;
     }
-    @media (max-width: 980px){
-      .layout{ grid-template-columns: 1fr; }
+
+    /* Sidebar */
+    .sidebar{
+      background:var(--panel);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:18px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      height: calc(100vh - 160px);
+      min-height: 520px;
+    }
+    .tabbar{
+      display:flex; flex-wrap:wrap; gap:6px;
+      padding:10px;
+      background:rgba(255,255,255,.85);
+      border-bottom:1px solid rgba(0,0,0,.08);
+      position:sticky;
+      top:0;
+      z-index:5;
+    }
+    .tabBtn{
+      border:none;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius:12px 12px 0 0;
+      background:rgba(255,255,255,.65);
+      border:1px solid rgba(0,0,0,.10);
+      font-weight:900;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:#333;
+    }
+    .tabBtn.active{
+      background:white;
+      border-bottom-color:white;
+      box-shadow:0 -4px 14px rgba(0,0,0,.08);
+    }
+    .sideScroll{
+      padding:12px;
+      overflow:auto;
+      flex:1;
     }
 
     .card{
-      background:rgba(255,255,255,.6);
-      border:1px solid var(--stroke);
-      border-radius:14px;
+      background:rgba(255,255,255,.75);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:16px;
       padding:14px;
       margin-bottom:12px;
     }
@@ -95,303 +146,268 @@
       border-bottom:2px solid var(--primary);
       padding-bottom:8px;
     }
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .help{font-size:12px;color:#555;opacity:.92;margin-top:6px;line-height:1.35}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .checkRow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .chk{display:flex;align-items:center;gap:8px;font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#444}
+    .chk input{width:18px;height:18px}
 
-    label{font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#444}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-    .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px}
-    input[type=text], textarea, select{
-      width:100%;
-      padding:10px;
-      border-radius:12px;
-      border:2px solid #ddd;
-      font-family:'Montserrat',sans-serif;
-      outline:none;
-      transition:.15s;
-      background:white;
-      font-size:14px;
-    }
-    textarea{min-height:120px; resize:vertical; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-    input:focus, textarea:focus, select:focus{
-      border-color:var(--primary);
-      box-shadow:0 0 10px rgba(0,229,255,.25);
-    }
+    /* Emoji buttons */
+    .emojiBar{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .emojiBtn{width:36px;height:36px;border-radius:10px;border:1px solid rgba(0,0,0,.15);background:white;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:.1s}
+    .emojiBtn:hover{transform:translateY(-1px)}
 
-    .checks{display:flex; flex-wrap:wrap; gap:14px; margin-top:10px}
-    .chk{
-      display:flex; align-items:center; gap:8px;
-      font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase;
-      color:#333;
-    }
-    .chk input{ width:18px; height:18px; accent-color: var(--accent); }
-
-    /* right side */
-    .toolbar{
+    /* Preview area */
+    .previewArea{
+      background:rgba(255,255,255,.55);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:18px;
+      overflow:hidden;
       display:flex;
-      gap:10px;
+      flex-direction:column;
+      min-height:520px;
+    }
+    .actions{
+      display:flex; gap:10px; align-items:center; justify-content:flex-start;
+      padding:12px;
+      background:rgba(255,255,255,.85);
+      border-bottom:1px solid rgba(0,0,0,.08);
       flex-wrap:wrap;
-      align-items:center;
-      justify-content:flex-start;
-      margin-bottom:10px;
     }
     .btn{
       border:none;
-      border-radius:14px;
-      padding:12px 14px;
-      cursor:pointer;
-      background:#222;
-      color:#fff;
-      font-weight:900;
-      letter-spacing:.04em;
-      text-transform:uppercase;
-    }
-    .btn.primary{
-      background:linear-gradient(45deg, var(--primary), #00B8D4);
-      box-shadow:0 5px 15px rgba(0,229,255,.25);
-    }
-    .btn.ghost{
-      background:#fff;
-      color:#111;
-      border:2px solid rgba(0,0,0,.12);
-    }
-    .status{
-      margin-left:auto;
-      font-weight:900;
-      color:#333;
-      padding:10px 12px;
       border-radius:999px;
-      background:rgba(255,255,255,.7);
-      border:1px solid rgba(0,0,0,.08);
-      min-width:140px;
-      text-align:center;
+      padding:12px 16px;
+      cursor:pointer;
+      font-family:'Fredoka One',cursive;
+      font-size:14px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      background:linear-gradient(45deg, var(--primary), #00B8D4);
+      color:white;
+      box-shadow:0 5px 15px rgba(0,229,255,.30);
+      transition:.12s;
     }
+    .btn:hover{transform:scale(1.01)}
+    .btn:active{transform:scale(.98)}
+    .btn.alt{background:#222; box-shadow:none}
+    .btn.alt2{background:#444; box-shadow:none}
 
-    .previewBox{
-      background:rgba(0,0,0,.06);
-      border:1px dashed rgba(0,0,0,.2);
-      border-radius:14px;
-      padding:10px;
+    .previewWrap{
+      flex:1;
+      padding:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,.05);
     }
-    .previewStage{
-      position:relative;
+    .ratio16x9{
       width:100%;
+      max-width: 900px;
       aspect-ratio: 16 / 9;
-      border-radius:12px;
-      overflow:hidden;
-      background:transparent;
+      background: rgba(255,255,255,.25);
+      border:1px dashed rgba(0,0,0,.18);
+      border-radius:16px;
+      padding:10px;
+      display:flex;
     }
-    .previewFrame{
-      position:absolute;
-      inset:0;
+    iframe#preview{
       width:100%;
       height:100%;
       border:0;
+      border-radius:12px;
       background:transparent;
       display:block;
     }
 
-    .qStack{ display:flex; flex-direction:column; gap:12px; }
-    .rangeRow{ display:flex; align-items:center; gap:12px; }
-    .rangeVal{ font-weight:900; min-width:46px; text-align:right; }
-
-    .emojiBar{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-    .emojiBtn{
-      width:36px; height:36px;
-      border-radius:10px;
-      border:1px solid rgba(0,0,0,.15);
-      background:white;
-      cursor:pointer;
-      font-size:20px;
-      display:flex; align-items:center; justify-content:center;
-      transition:.08s;
-    }
-    .emojiBtn:hover{ transform:translateY(-1px) }
-
-    .help{ font-size:12px; color:#555; opacity:.9; margin-top:6px; line-height:1.35; }
-
-    /* toast */
-    .toast{
-      position:fixed;
-      left:50%; bottom:22px;
-      transform:translateX(-50%);
-      background:rgba(0,0,0,.85);
-      color:#fff;
+    .footer{
       padding:10px 14px;
-      border-radius:999px;
-      font-weight:800;
-      letter-spacing:.03em;
-      opacity:0;
-      pointer-events:none;
-      transition:.2s;
+      text-align:center;
+      font-size:12px;
+      color:rgba(0,0,0,.55);
+      border-top:1px solid rgba(0,0,0,.06);
+      background:rgba(255,255,255,.65);
     }
-    .toast.show{ opacity:1; }
+    .footer b{color:#111}
+
+    /* Sections */
+    .tabSection{display:none}
+    .tabSection.active{display:block}
   </style>
 </head>
 <body>
-  <div class="bg-float" style="left:10%; animation-duration: 26s;">🐑</div>
-  <div class="bg-float" style="left:80%; animation-duration: 30s; animation-delay:-7s;">🚀</div>
-  <div class="bg-float" style="left:30%; animation-duration: 22s; animation-delay:-12s;">🪐</div>
-  <div class="bg-float" style="left:60%; animation-duration: 28s; animation-delay:-3s;">👾</div>
-
-  <div class="wrap">
-    <header>
-      <div class="brand">
-        <div style="font-size:34px">🐑</div>
-        <div>
-          <h1 id="uiHeaderTitle">SHEEP RUN</h1>
-          <div class="mini" id="uiHeaderMini">Редактор игры</div>
-        </div>
-      </div>
-      <div class="row" style="gap:10px">
-        <label id="lblLang">Язык</label>
-        <select id="uiLang" style="min-width:160px">
-          <option value="ru" selected>Русский</option>
-          <option value="en">English</option>
-          <option value="fr">Français</option>
-          <option value="de">Deutsch</option>
-          <option value="es">Español</option>
-          <option value="it">Italiano</option>
-          <option value="zh">中文</option>
-          <option value="ja">日本語</option>
-        </select>
-      </div>
-    </header>
-
-    <div class="layout">
-      <!-- LEFT: settings -->
-      <div>
-        <div class="card">
-          <h2>⚙️ <span id="tGame">Настройки</span></h2>
-          <div class="grid2">
-            <div>
-              <label id="lblMode">Режим</label>
-              <select id="gameMode">
-                <option value="choice" selected>Кнопки (A/B)</option>
-          <option value="choice4">Кнопки (A/B/C/D)</option>
-                <option value="input">Впиши ответ</option>
-              </select>
-            </div>
-            <div>
-              <label id="lblWin">Сколько заданий до победы</label>
-              <input id="winQuestions" type="text" value="10" />
-            </div>
-          </div>
-
-          <div class="checks">
-            <label class="chk"><input type="checkbox" id="mathMode"><span id="lblMath">MathJax</span></label>
-            <label class="chk"><input type="checkbox" id="transparentBg"><span id="lblTransparent">Прозрачный фон</span></label>
-            <label class="chk"><input type="checkbox" id="mirrorHero"><span id="lblMirror">Отразить персонажа</span></label>
-            <label class="chk"><input type="checkbox" id="randomQuestions" checked><span id="lblRandom">Рандом вопросов</span></label>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>🧩 <span id="tUi">Тексты интерфейса</span></h2>
-          <div class="grid2">
-            <div><label id="lTitle">Название</label><input id="ui_title" type="text" value="SHEEP RUN"></div>
-            <div><label id="lStart">Кнопка Старт</label><input id="ui_start" type="text" value="PLAY"></div>
-            <div><label id="lAgain">Кнопка Повтор</label><input id="ui_again" type="text" value="AGAIN"></div>
-            <div><label id="lOver">Текст при проигрыше</label><input id="ui_over" type="text" value="GAME OVER"></div>
-            <div style="grid-column:1 / -1"><label id="lScore">Подпись счёта</label><input id="ui_score" type="text" value="Score: "></div>
-            <div style="grid-column:1 / -1">
-              <label id="lFont">Размер текста задания</label>
-              <div class="rangeRow">
-                <input id="fontSize" type="range" min="5" max="12" step="0.5" value="8" style="width:100%">
-                <div class="rangeVal"><span id="fontSizeVal">8</span>vmin</div>
-              </div>
-              <div class="help" id="hFont">Меняет размер текста в облачке задания.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>🎨 <span id="tAssets">Персонаж и предметы</span></h2>
-          <div class="help" id="hAssets">Можно писать эмодзи (🐑) или вставлять ссылку на картинку/гиф (https://...). Списки — через запятую или с новой строки.</div>
-
-          <div>
-            <label id="lHero">Персонаж</label>
-            <input id="hero" type="text" value="🐑">
-            <div class="emojiBar" id="heroEmojiBar"></div>
-          </div>
-
-          <div class="grid3" style="margin-top:10px">
-            <div>
-              <label id="lGround">Препятствия (земля)</label>
-              <textarea id="obs_ground">🌲,🪨,🪵,🌵</textarea>
-            </div>
-            <div>
-              <label id="lGood">Полезные (летят)</label>
-              <textarea id="obs_good">🌾,🌽,🍀,🍎</textarea>
-            </div>
-            <div>
-              <label id="lBad">Опасные (летят)</label>
-              <textarea id="obs_bad">🦅,🧱,🚁,⛈️</textarea>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>🔊 <span id="tAudio">Звуки</span></h2>
-          <div class="help" id="hAudio">Если ссылки пустые — игра всё равно будет со встроенными простыми звуками. Музыка — по желанию.</div>
-          <div class="grid2">
-            <div><label>Music</label><input id="aud_mus" type="text" value="https://raw.githubusercontent.com/kgbgamelab/audioplayer/main/Baa%20Dash.mp3"></div>
-            <div><label>Ding</label><input id="aud_ding" type="text" value="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></div>
-            <div><label>Buzz</label><input id="aud_buzz" type="text" value="https://assets.mixkit.co/active_storage/sfx/257/257-preview.mp3"></div>
-            <div><label>Coin</label><input id="aud_coin" type="text" value="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></div>
-            <div><label>Crash</label><input id="aud_crash" type="text" value="https://assets.mixkit.co/active_storage/sfx/2042/2042-preview.mp3"></div>
-            <div><label>Win</label><input id="aud_win" type="text" value="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>📝 <span id="tQuestions">Задания</span></h2>
-          <div class="help" id="hQuestions">
-            Вставляй из Excel: <b>каждая строка = одно задание</b>.<br>
-            В “Верно” можно несколько вариантов через <b>|</b> (например: meow|mew).<br>
-            В режиме “Впиши ответ” колонка “Неверно” не нужна.
-          </div>
-
-          <div class="qStack">
-            <div>
-              <label id="lQ">Вопрос</label>
-              <textarea id="q_col" placeholder="Dog ___ fast.&#10;Cat ___ milk."></textarea>
-            </div>
-            <div>
-              <label id="lC">Верно</label>
-              <textarea id="c_col" placeholder="runs&#10;drinks"></textarea>
-            </div>
-            <div>
-              <label id="lW">Неверно</label>
-              <textarea id="w_col" placeholder="run&#10;drink"></textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT: preview -->
-      <div>
-        <div class="toolbar">
-          <button class="btn ghost" id="btnPreview">Обновить превью</button>
-          <button class="btn primary" id="btnPublish">Сгенерировать игру</button>
-          <button class="btn ghost" id="btnGet">Получить игру</button>
-          <div class="status" id="statusPill">Готово</div>
-        </div>
-
-        <div class="previewBox">
-          <div class="previewStage">
-            <iframe id="preview" class="previewFrame"
-              allow="autoplay; fullscreen"
-              sandbox="allow-scripts allow-same-origin allow-forms"
-            ></iframe>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast">Скопировано!</div>
-
+<div class="bg-float" style="left:10%; animation-duration: 26s;">🐑</div>
+<div class="bg-float" style="left:82%; animation-duration: 30s; animation-delay:-7s;">🚀</div>
+<div class="bg-float" style="left:30%; animation-duration: 22s; animation-delay:-12s;">🪐</div>
+<div class="bg-float" style="left:60%; animation-duration: 28s; animation-delay:-3s;">👾</div>
+<div class="wrap">
+<div class="header">
+<div class="brand">
+<div aria-hidden="true" class="logoWrap">🐑</div>
+<div>
+<h1 id="uiHeaderTitle">SHEEP RUN</h1>
+<div class="mini" id="uiHeaderMini">Редактор игры</div>
+<div class="by"><b>@teachy_witchy</b></div>
+</div>
+</div>
+<div class="headerRight">
+<div style="display:flex;align-items:center;gap:10px">
+<label id="lblLang">Язык</label>
+<select id="uiLang" style="min-width:170px">
+<option selected="" value="ru">Русский</option>
+<option value="en">English</option>
+<option value="fr">Français</option>
+<option value="de">Deutsch</option>
+<option value="es">Español</option>
+<option value="it">Italiano</option>
+<option value="zh">中文</option>
+<option value="ja">日本語</option>
+</select>
+</div>
+<div class="statusPill" id="statusPill">Готово</div>
+</div>
+</div>
+<div class="main">
+<!-- LEFT -->
+<aside class="sidebar">
+<div aria-label="Разделы" class="tabbar" role="tablist">
+<button class="tabBtn active" data-tab="settings" id="tab-settings" type="button">Настройки</button>
+<button class="tabBtn" data-tab="tasks" id="tab-tasks" type="button">Задания</button>
+<button class="tabBtn" data-tab="images" id="tab-images" type="button">Картинки</button>
+<button class="tabBtn" data-tab="sounds" id="tab-sounds" type="button">Звуки</button>
+</div>
+<div class="sideScroll">
+<!-- SETTINGS (merged) -->
+<section class="tabSection active" data-tab="settings" id="sec-settings">
+<div class="card">
+<h2>⚙️ <span id="tGame">Настройки</span></h2>
+<div class="grid2">
+<div>
+<label id="lblMode">Режим</label>
+<select id="gameMode">
+<option selected="" value="choice">Кнопки (A/B)</option>
+<option value="input">Впиши ответ</option>
+</select>
+</div>
+<div>
+<label id="lblWin">Сколько заданий до победы</label>
+<input id="winQuestions" type="text" value="10"/>
+</div>
+</div>
+<div class="checkRow" style="margin-top:10px">
+<label class="chk"><input id="mathMode" type="checkbox"/><span id="lblMath">MathJax</span></label>
+<label class="chk"><input id="transparentBg" type="checkbox"/><span id="lblTransparent">Прозрачный фон</span></label>
+</div>
+</div>
+<div class="card">
+<h2>🧩 <span id="tUi">Тексты интерфейса</span></h2>
+<div class="grid2">
+<div><label id="lTitle">Название</label><input id="ui_title" type="text" value="SHEEP RUN"/></div>
+<div><label id="lStart">Кнопка Старт</label><input id="ui_start" type="text" value="PLAY"/></div>
+<div><label id="lAgain">Кнопка Повтор</label><input id="ui_again" type="text" value="AGAIN"/></div>
+<div><label id="lOver">Текст при проигрыше</label><input id="ui_over" type="text" value="GAME OVER"/></div>
+<div style="grid-column:1 / -1"><label id="lScore">Подпись счёта</label><input id="ui_score" type="text" value="Score: "/></div>
+</div>
+<div class="help" id="hLangFill">Язык может подставлять базовые надписи. Если вписали своё — остаётся ваше.</div>
+</div>
+</section>
+<!-- TASKS -->
+<section class="tabSection" data-tab="tasks" id="sec-tasks">
+<div class="card">
+<h2>📝 <span id="tQ">Задания</span></h2>
+<div class="help" id="hQ">Каждая строка = одно задание. В «Верно» можно несколько вариантов через <b>|</b>. Если вставили ссылку на картинку — она покажется как картинка в игре.</div>
+<div class="checkRow" style="margin:10px 0 6px">
+<label class="chk"><input id="randomQuestions" type="checkbox"/><span id="lblRandom">Рандом вопросов</span></label>
+</div>
+<div class="row" style="margin:8px 0 10px">
+<div style="flex:1">
+<label id="lblFontSize">Размер шрифта заданий</label>
+<input id="fontSize" type="text" value="8">
+<div class="help" id="hFont">Число. Пример: 7–10 для маленького экрана, 10–14 для крупного.</div>
+</input></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div>
+<label id="lQ">Вопрос</label>
+<textarea id="q_col" placeholder="Dog ___ fast."></textarea>
+</div>
+<div>
+<label id="lC">Верно</label>
+<textarea id="c_col" placeholder="runs"></textarea>
+</div>
+<div>
+<label id="lW">Неверно</label>
+<textarea id="w_col" placeholder="run"></textarea>
+</div>
+</div>
+</div>
+</section>
+<!-- IMAGES -->
+<section class="tabSection" data-tab="images" id="sec-images">
+<div class="card">
+<h2>🖼️ <span id="tAssets">Картинки</span></h2>
+<div class="help" id="hAssets">Можно эмодзи или ссылки на картинки/гиф. Списки — через запятую или с новой строки.</div>
+<div style="margin-top:10px">
+<label id="lHero">Персонаж</label>
+<input id="hero" type="text" value="🐑"/>
+<div class="emojiBar" id="heroEmojiBar"></div>
+<div class="checkRow" style="margin-top:10px">
+<label class="chk"><input id="mirrorHero" type="checkbox"/><span id="lblMirror">Отразить персонажа</span></label>
+</div>
+</div>
+<div class="grid3" style="margin-top:10px">
+<div>
+<label id="lGround">Препятствия (земля)</label>
+<textarea id="obs_ground">🌲,🪨,🪵,🌵</textarea>
+</div>
+<div>
+<label id="lGood">Хорошие (летят)</label>
+<textarea id="obs_good">🌾,🌽,🍀,🍎</textarea>
+</div>
+<div>
+<label id="lBad">Плохие (летят)</label>
+<textarea id="obs_bad">🦅,🧱,🚁,⛈️</textarea>
+</div>
+</div>
+</div>
+</section>
+<!-- SOUNDS -->
+<section class="tabSection" data-tab="sounds" id="sec-sounds">
+<div class="card">
+<h2>🔊 <span id="tAudio">Звуки</span></h2>
+<div class="help" id="hAudio">Вставляй прямые ссылки на mp3/ogg. Если оставить пустым — игра использует простые звуки по умолчанию.</div>
+<div class="grid2">
+<div><label>Music</label><input id="aud_mus" type="text" value="https://raw.githubusercontent.com/kgbgamelab/audioplayer/main/Baa%20Dash.mp3"/></div>
+<div><label>Ding</label><input id="aud_ding" type="text" value="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"/></div>
+<div><label>Buzz</label><input id="aud_buzz" type="text" value="https://assets.mixkit.co/active_storage/sfx/257/257-preview.mp3"/></div>
+<div><label>Coin</label><input id="aud_coin" type="text" value="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"/></div>
+<div><label>Crash</label><input id="aud_crash" type="text" value="https://assets.mixkit.co/active_storage/sfx/2042/2042-preview.mp3"/></div>
+<div><label>Win</label><input id="aud_win" type="text" value="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"/></div>
+</div>
+</div>
+</section>
+</div>
+<div class="footer">© 2026 <b>Корпорация Геймификации Будущего</b> · <b>@teachy_witchy</b></div>
+</aside>
+<!-- RIGHT -->
+<section class="previewArea">
+<div class="actions">
+<button class="btn alt2" id="btnPreview" onclick="refreshPreview()" type="button">Обновить превью</button>
+<button class="btn" id="btnPublish" onclick="publish()" type="button">Сгенерировать игру</button>
+<button class="btn alt" id="btnGet" onclick="copyIframe()" type="button">Получить игру</button>
+</div>
+<div class="previewWrap">
+<div class="ratio16x9">
+<iframe allow="autoplay; fullscreen" id="preview" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+</div>
+</div>
+</section>
+</div>
+</div>
 <script>
+
   // ====== CONFIG ======
   // Движок игры (main.html) лежит в репозитории puk.
   const BASE_MAIN = "https://nikashum93.github.io/puk/main.html";
@@ -428,13 +444,97 @@
       qHelp:"Paste from Excel: one line = one task. “Correct” can include multiple options via |. In input mode, “Wrong” is not required.",
       btnPrev:"Refresh preview", btnPub:"Generate game", btnGet:"Get game",
       stReady:"Ready", stPub:"Generating…", stErr:"Error", stWait:"Done ✅"
+    },
+    fr: {
+      mini: "Éditeur de jeu",
+      lang:"Langue", mode:"Mode", win:"Défis pour gagner",
+      math:"MathJax", transparent:"Fond transparent", mirror:"Miroir du héros", random:"Ordre aléatoire",
+      tGame:"Réglages", tUi:"Textes UI", tAssets:"Héros & objets", tAudio:"Audio", tQ:"Défis",
+      title:"Titre", start:"Bouton Start", again:"Rejouer", over:"Texte défaite", score:"Libellé score",
+      q:"Question", c:"Correct", w:"Faux",
+      assetsHelp:"Utilise des emoji (🐑) ou un lien d'image/gif (https://...). Listes : virgules ou nouvelles lignes.",
+      audioHelp:"Si les liens sont vides, le jeu aura quand même des sons intégrés. La musique est optionnelle.",
+      qHelp:"Colle depuis Excel : 1 ligne = 1 défi. “Correct” peut contenir plusieurs réponses via |. En mode saisie, “Faux” n'est pas obligatoire.",
+      btnPrev:"Rafraîchir l'aperçu", btnPub:"Générer le jeu", btnGet:"Obtenir le jeu",
+      stReady:"Prêt", stPub:"Génération…", stErr:"Erreur", stWait:"Terminé ✅"
+    },
+    de: {
+      mini: "Spiel-Editor",
+      lang:"Sprache", mode:"Modus", win:"Aufgaben bis zum Sieg",
+      math:"MathJax", transparent:"Transparenter Hintergrund", mirror:"Held spiegeln", random:"Zufällige Reihenfolge",
+      tGame:"Einstellungen", tUi:"UI-Texte", tAssets:"Held & Items", tAudio:"Audio", tQ:"Aufgaben",
+      title:"Titel", start:"Start-Taste", again:"Nochmal", over:"Text bei Verlust", score:"Punkte-Label",
+      q:"Frage", c:"Richtig", w:"Falsch",
+      assetsHelp:"Emoji (🐑) oder Bild/GIF-URL (https://...). Listen: Kommas oder neue Zeilen.",
+      audioHelp:"Wenn URLs leer sind, hat das Spiel trotzdem einfache Sounds. Musik ist optional.",
+      qHelp:"Aus Excel einfügen: 1 Zeile = 1 Aufgabe. “Richtig” kann mehrere Optionen via | haben. Im Eingabemodus ist “Falsch” nicht nötig.",
+      btnPrev:"Vorschau aktualisieren", btnPub:"Spiel erzeugen", btnGet:"Spiel holen",
+      stReady:"Bereit", stPub:"Erzeuge…", stErr:"Fehler", stWait:"Fertig ✅"
+    },
+    es: {
+      mini: "Editor del juego",
+      lang:"Idioma", mode:"Modo", win:"Tareas para ganar",
+      math:"MathJax", transparent:"Fondo transparente", mirror:"Espejar personaje", random:"Orden aleatorio",
+      tGame:"Ajustes", tUi:"Textos UI", tAssets:"Personaje y objetos", tAudio:"Audio", tQ:"Tareas",
+      title:"Título", start:"Botón Start", again:"Otra vez", over:"Texto al perder", score:"Etiqueta de puntuación",
+      q:"Pregunta", c:"Correcto", w:"Incorrecto",
+      assetsHelp:"Usa emoji (🐑) o URL de imagen/gif (https://...). Listas: comas o saltos de línea.",
+      audioHelp:"Si las URLs están vacías, el juego igual tendrá sonidos básicos. La música es opcional.",
+      qHelp:"Pega desde Excel: 1 línea = 1 tarea. “Correcto” puede tener varias opciones con |. En modo escribir, “Incorrecto” no es obligatorio.",
+      btnPrev:"Actualizar vista previa", btnPub:"Generar juego", btnGet:"Obtener juego",
+      stReady:"Listo", stPub:"Generando…", stErr:"Error", stWait:"Hecho ✅"
+    },
+    it: {
+      mini: "Editor del gioco",
+      lang:"Lingua", mode:"Modalità", win:"Prove per vincere",
+      math:"MathJax", transparent:"Sfondo trasparente", mirror:"Specchia eroe", random:"Ordine casuale",
+      tGame:"Impostazioni", tUi:"Testi UI", tAssets:"Eroe e oggetti", tAudio:"Audio", tQ:"Prove",
+      title:"Titolo", start:"Pulsante Start", again:"Di nuovo", over:"Testo sconfitta", score:"Etichetta punteggio",
+      q:"Domanda", c:"Corretto", w:"Sbagliato",
+      assetsHelp:"Usa emoji (🐑) o URL immagine/gif (https://...). Liste: virgole o nuove righe.",
+      audioHelp:"Se le URL sono vuote, il gioco avrà comunque suoni base. La musica è opzionale.",
+      qHelp:"Incolla da Excel: 1 riga = 1 prova. “Corretto” può includere più opzioni con |. In modalità input, “Sbagliato” non è obbligatorio.",
+      btnPrev:"Aggiorna anteprima", btnPub:"Genera gioco", btnGet:"Ottieni gioco",
+      stReady:"Pronto", stPub:"Generazione…", stErr:"Errore", stWait:"Fatto ✅"
+    },
+    zh: {
+      mini: "游戏编辑器",
+      lang:"语言", mode:"模式", win:"获胜题数",
+      math:"MathJax", transparent:"透明背景", mirror:"镜像角色", random:"随机顺序",
+      tGame:"设置", tUi:"界面文字", tAssets:"角色与物品", tAudio:"音频", tQ:"题目",
+      title:"标题", start:"开始按钮", again:"再来一次", over:"失败文字", score:"分数标签",
+      q:"问题", c:"正确", w:"错误",
+      assetsHelp:"可用表情(🐑)或图片/动图链接(https://...)。列表：逗号或换行。",
+      audioHelp:"如果链接为空，游戏仍有基础音效。音乐可选。",
+      qHelp:"从 Excel 粘贴：一行=一道题。“正确”可用 | 写多个答案。输入模式下“错误”不必填。",
+      btnPrev:"刷新预览", btnPub:"生成游戏", btnGet:"获取游戏",
+      stReady:"就绪", stPub:"生成中…", stErr:"错误", stWait:"完成 ✅"
+    },
+    ja: {
+      mini: "ゲームエディター",
+      lang:"言語", mode:"モード", win:"勝利までの問題数",
+      math:"MathJax", transparent:"透明背景", mirror:"キャラ反転", random:"ランダム順",
+      tGame:"設定", tUi:"UIテキスト", tAssets:"キャラとアイテム", tAudio:"オーディオ", tQ:"問題",
+      title:"タイトル", start:"スタート", again:"もう一回", over:"負けテキスト", score:"スコア表示",
+      q:"問題", c:"正解", w:"不正解",
+      assetsHelp:"絵文字(🐑)または画像/GIF URL(https://...)。リスト：カンマ/改行。",
+      audioHelp:"URLが空でも基本効果音は入っています。音楽は任意です。",
+      qHelp:"Excel から貼り付け：1行=1問。“正解”は | で複数可。入力モードでは“不正解”は不要です。",
+      btnPrev:"プレビュー更新", btnPub:"ゲーム生成", btnGet:"ゲーム取得",
+      stReady:"準備OK", stPub:"生成中…", stErr:"エラー", stWait:"完了 ✅"
     }
   };
 
   const $ = (id)=>document.getElementById(id);
 
+  function setText(id, val){ const el = $(id); if(el) el.textContent = val; }
+  function setHTML(id, val){ const el = $(id); if(el) el.innerHTML = val; }
+  function setValue(id, val){ const el = $(id); if(el) el.value = val; }
+
+
   function toast(msg){
     const t = $('toast');
+    if(!t){ try{ console.log(msg); }catch(e){} return; }
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'), 1400);
@@ -442,44 +542,44 @@
 
   function applyLang(lang){
     const t = I18N[lang] || I18N.ru;
-    $('uiHeaderMini').textContent = t.mini;
-    $('lblLang').textContent = t.lang;
+    setText('uiHeaderMini', t.mini);
+    setText('lblLang', t.lang);
 
-    $('tGame').textContent = t.tGame;
-    $('lblMode').textContent = t.mode;
-    $('lblWin').textContent = t.win;
-    $('lblMath').textContent = t.math;
-    $('lblTransparent').textContent = t.transparent;
-    $('lblMirror').textContent = t.mirror;
-    $('lblRandom').textContent = t.random;
+    setText('tGame', t.tGame);
+    setText('lblMode', t.mode);
+    setText('lblWin', t.win);
+    setText('lblMath', t.math);
+    setText('lblTransparent', t.transparent);
+    setText('lblMirror', t.mirror);
+    setText('lblRandom', t.random);
 
-    $('tUi').textContent = t.tUi;
-    $('lTitle').textContent = t.title;
-    $('lStart').textContent = t.start;
-    $('lAgain').textContent = t.again;
-    $('lOver').textContent = t.over;
-    $('lScore').textContent = t.score;
+    setText('tUi', t.tUi);
+    setText('lTitle', t.title);
+    setText('lStart', t.start);
+    setText('lAgain', t.again);
+    setText('lOver', t.over);
+    setText('lScore', t.score);
 
-    $('tAssets').textContent = t.tAssets;
-    $('hAssets').textContent = t.assetsHelp;
-    $('lHero').textContent = lang === 'ru' ? 'Персонаж' : 'Hero';
-    $('lGround').textContent = lang === 'ru' ? 'Препятствия (земля)' : 'Ground obstacles';
-    $('lGood').textContent   = lang === 'ru' ? 'Полезные (летят)' : 'Good (air)';
-    $('lBad').textContent    = lang === 'ru' ? 'Опасные (летят)' : 'Bad (air)';
+    setText('tAssets', t.tAssets);
+    setText('hAssets', t.assetsHelp);
+    setText('lHero', lang === 'ru' ? 'Персонаж' : 'Hero');
+    setText('lGround', lang === 'ru' ? 'Препятствия (земля)' : 'Ground obstacles');
+    setText('lGood', lang === 'ru' ? 'Полезные (летят)' : 'Good (air)');
+    setText('lBad', lang === 'ru' ? 'Опасные (летят)' : 'Bad (air)');
 
-    $('tAudio').textContent = t.tAudio;
-    $('hAudio').textContent = t.audioHelp;
+    setText('tAudio', t.tAudio);
+    setText('hAudio', t.audioHelp);
 
-    $('tQuestions').textContent = t.tQ;
-    $('hQuestions').innerHTML = t.qHelp.replaceAll('|','<b>|</b>');
-    $('lQ').textContent = t.q;
-    $('lC').textContent = t.c;
-    $('lW').textContent = t.w;
+    setText('tQuestions', t.tQ);
+    setHTML('hQuestions', t.qHelp.replaceAll('|','<b>|</b>'));
+    setText('lQ', t.q);
+    setText('lC', t.c);
+    setText('lW', t.w);
 
-    $('btnPreview').textContent = t.btnPrev;
-    $('btnPublish').textContent = t.btnPub;
-    $('btnGet').textContent = t.btnGet;
-    $('statusPill').textContent = t.stReady;
+    setText('btnPreview', t.btnPrev);
+    setText('btnPublish', t.btnPub);
+    setText('btnGet', t.btnGet);
+    setText('statusPill', t.stReady);
   }
 
   // ===== helpers =====
@@ -615,14 +715,14 @@
     const cfg = collectConfig();
     const err = validate(cfg);
     if(err){
-      $('statusPill').textContent = I18N[cfg.lang]?.stErr || 'Ошибка';
+      setText('statusPill', I18N[cfg.lang]?.stErr || 'Ошибка');
       return;
     }
     // preview: send config to the game via postMessage (works even if editor is opened as a local file)
     const pr = $('preview');
     pr.dataset.pendingCfg = JSON.stringify(cfg);
     pr.src = BASE_MAIN + "?preview=1&v=" + Date.now();
-    $('statusPill').textContent = (I18N[cfg.lang]?.stReady || 'Готово');
+    setText('statusPill', (I18N[cfg.lang]?.stReady || 'Готово'));
   }
 
   // ===== publish + get iframe =====
@@ -631,9 +731,9 @@
   async function publish(){
     const cfg = collectConfig();
     const err = validate(cfg);
-    if(err){ alert(err); $('statusPill').textContent = I18N[cfg.lang]?.stErr || 'Ошибка'; return; }
+    if(err){ alert(err); setText('statusPill', I18N[cfg.lang]?.stErr || 'Ошибка'); return; }
 
-    $('statusPill').textContent = I18N[cfg.lang]?.stPub || 'Создаю…';
+    setText('statusPill', I18N[cfg.lang]?.stPub || 'Создаю…');
 
     const id = makeIdFromTitle(cfg);
     const payload = {
@@ -668,10 +768,10 @@
   sandbox="allow-scripts allow-same-origin allow-forms"
 ></iframe>`;
 
-      $('statusPill').textContent = I18N[cfg.lang]?.stWait || 'Готово ✅';
+      setText('statusPill', I18N[cfg.lang]?.stWait || 'Готово ✅');
       toast(cfg.lang === 'ru' ? 'Игра создана ✅' : 'Game generated ✅');
     }catch(e){
-      $('statusPill').textContent = I18N[cfg.lang]?.stErr || 'Ошибка';
+      setText('statusPill', I18N[cfg.lang]?.stErr || 'Ошибка');
       alert((cfg.lang === 'ru' ? 'Сеть/сервер: ' : 'Network/server: ') + e.message);
     }
   }
@@ -699,8 +799,8 @@
 
   // ===== init =====
   mountEmojiBar();
-  applyLang($('uiLang').value);
-  $('fontSizeVal').textContent = $('fontSize').value;
+  try{ applyLang($('uiLang') ? $('uiLang').value : 'ru'); }catch(e){ console.error(e); }
+  setText('fontSizeVal', $('fontSize').value);
 
   // When preview iframe loads, push latest config into the game
   $('preview').addEventListener('load', ()=>{
@@ -717,7 +817,7 @@
   $('btnPreview').addEventListener('click', refreshPreview);
 
   // font size label
-  $('fontSize').addEventListener('input', ()=>{ $('fontSizeVal').textContent = $('fontSize').value; });
+  $('fontSize').addEventListener('input', ()=>{ setText('fontSizeVal', $('fontSize').value); });
   $('btnPublish').addEventListener('click', publish);
   $('btnGet').addEventListener('click', copyIframe);
 
@@ -760,6 +860,86 @@
     window.__lastLang = lang;
     queuePreview();
   });
+
+  // --- language selectors ---
+  document.getElementById('uiLangUI').addEventListener('change', ()=>{
+    applyLang(document.getElementById('uiLangUI').value);
+  });
+
+  // game language affects default UI texts (only if user didn't customize)
+  document.getElementById('uiLangGame').addEventListener('change', ()=>{
+    const lang = document.getElementById('uiLangGame').value;
+
+    const DEFAULTS = {
+      ru: {start:'ИГРАТЬ', again:'ЕЩЁ РАЗ', over:'ИГРА ОКОНЧЕНА', score:'Счёт: '},
+      en: {start:'PLAY', again:'AGAIN', over:'GAME OVER', score:'Score: '},
+      fr: {start:'JOUER', again:'REJOUER', over:'FIN DE PARTIE', score:'Score : '},
+      de: {start:'SPIELEN', again:'NOCHMAL', over:'GAME OVER', score:'Punkte: '},
+      es: {start:'JUGAR', again:'OTRA VEZ', over:'FIN DEL JUEGO', score:'Puntuación: '},
+      it: {start:'GIOCA', again:'DI NUOVO', over:'FINE', score:'Punteggio: '},
+      zh: {start:'开始', again:'再来一次', over:'游戏结束', score:'得分：'},
+      ja: {start:'スタート', again:'もう一回', over:'ゲームオーバー', score:'スコア: '}
+    };
+
+    const allDefaults = Object.values(DEFAULTS).flatMap(d=>[d.start,d.again,d.over,d.score]);
+    const fStart = document.getElementById('ui_start');
+    const fAgain = document.getElementById('ui_again');
+    const fOver  = document.getElementById('ui_over');
+    const fScore = document.getElementById('ui_score');
+
+    const cur = {start:fStart.value.trim(), again:fAgain.value.trim(), over:fOver.value.trim(), score:fScore.value};
+    const should = DEFAULTS[lang] || DEFAULTS.en;
+
+    if(!cur.start || allDefaults.includes(cur.start)) fStart.value = should.start;
+    if(!cur.again || allDefaults.includes(cur.again)) fAgain.value = should.again;
+    if(!cur.over  || allDefaults.includes(cur.over))  fOver.value  = should.over;
+    if(!cur.score || allDefaults.includes(cur.score)) fScore.value = should.score;
+
+    generate();
+  });
+
+
+  // ---------- tabs ----------
+  function setTab(key){
+    document.querySelectorAll('.tabBtn').forEach(b=>{
+      const on = b.dataset.tab === key;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('.tabSection').forEach(s=>{
+      s.classList.toggle('active', s.dataset.tab === key);
+    });
+  }
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.tabBtn');
+    if(!btn) return;
+    setTab(btn.dataset.tab);
+  });
+
+
+</script>
+<script>
+  // live preview on input
+  document.addEventListener('input', (e)=>{
+    const t = e.target;
+    if(!t) return;
+    const ids = new Set(['uiLang','gameMode','mathMode','transparentBg','mirrorHero','randomQuestions','winQuestions','fontSize',
+      'ui_title','ui_start','ui_again','ui_over','ui_score','hero','obs_ground','obs_good','obs_bad',
+      'aud_mus','aud_ding','aud_buzz','aud_coin','aud_crash','aud_win','q_col','c_col','w_col']);
+    if(t.id && ids.has(t.id)) {
+      if(typeof queuePreview === 'function') queuePreview();
+    }
+  });
+
+  document.getElementById('uiLang').addEventListener('change', ()=>{
+    if(typeof applyLang === 'function') applyLang(document.getElementById('uiLang').value);
+    if(typeof queuePreview === 'function') queuePreview();
+  });
+
+  // init
+  if(typeof mountEmojiBar === 'function') mountEmojiBar();
+  if(typeof applyLang === 'function') applyLang(document.getElementById('uiLang').value);
+  if(typeof refreshPreview === 'function') refreshPreview();
 </script>
 </body>
 </html>
