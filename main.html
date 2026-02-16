@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Sheep Run — Engine</title>
+  <title>Sheep Run</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 
   <style>
-    :root { --move-speed: 3.5s; }
+    :root { --move-speed: 3.5s; --hero-scale: 1; }
 
     * { box-sizing: border-box; }
     html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#333; }
@@ -70,13 +70,12 @@
       width:15vh; height:15vh;
       z-index:10; display:flex; align-items:center; justify-content:center;
       font-size:13vh;
-      transform: scaleX(1);
+      transform: scaleX(var(--hero-scale));
     }
-    .hero-mirror{ transform: scaleX(-1); }
     .bobbing{ animation: runBob 0.4s infinite alternate; }
-    @keyframes runBob { from{transform:translateY(0) scaleX(var(--hero-scale,1));} to{transform:translateY(-1.5vh) scaleX(var(--hero-scale,1));} }
+    @keyframes runBob { from{transform:translateY(0) scaleX(var(--hero-scale));} to{transform:translateY(-1.5vh) scaleX(var(--hero-scale));} }
     .jump-anim{ animation: jumpArc 1.0s cubic-bezier(0.4,0,0.2,1) forwards; }
-    @keyframes jumpArc { 0%,100%{ bottom:0; transform:scaleX(var(--hero-scale,1)); } 50%{ bottom:45%; transform:scaleX(var(--hero-scale,1)); } }
+    @keyframes jumpArc { 0%,100%{ bottom:0; transform:scaleX(var(--hero-scale)); } 50%{ bottom:45%; transform:scaleX(var(--hero-scale)); } }
     .blink-anim{ animation: blink-effect 0.2s infinite; filter:sepia(1) saturate(10) hue-rotate(-50deg); }
     @keyframes blink-effect{ 50%{ opacity:0.4; } }
 
@@ -111,16 +110,38 @@
       color:white; padding:20px; text-align:center;
     }
     .start-title{ font-size:12vh; margin:0; text-shadow:0 8px 0 rgba(0,0,0,0.1); }
-    .start-emojis{ position:relative; display:flex; align-items:center; margin-bottom:20px; height:25vh; }
-    .start-hero{ font-size:20vh; z-index:2; transform: scaleX(var(--hero-scale,1)); }
+
+    .start-emojis{
+      position:relative;
+      width:min(520px, 90vw);
+      height:25vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:20px;
+    }
+    .start-hero{
+      position:relative;
+      font-size:20vh;
+      z-index:2;
+      transform: scaleX(var(--hero-scale));
+    }
+    /* Пук всегда слева от героя и улетает влево */
     .start-smoke{
-      position:absolute; right:55%; font-size:12vh; z-index:1;
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-130%, -35%) scaleX(-1);
+      font-size:12vh;
+      z-index:1;
       animation:fartPuff 1.2s ease-out infinite;
+      pointer-events:none;
+      opacity:0;
     }
     @keyframes fartPuff{
-      0%{ transform: scaleX(var(--hero-scale,1)) scale(0.3) translateX(-20px); opacity:0;}
-      20%{opacity:1;}
-      100%{ transform: scaleX(var(--hero-scale,1)) scale(1.3) translateX(60px); opacity:0;}
+      0%{ transform: translate(-120%, -35%) scaleX(-1) scale(0.35); opacity:0; }
+      15%{ opacity:1; }
+      100%{ transform: translate(-220%, -35%) scaleX(-1) scale(1.35); opacity:0; }
     }
 
     .settings-box{
@@ -205,7 +226,7 @@
   <div id="start-screen" class="overlay">
     <h1 class="start-title" id="uiTitle">SHEEP RUN</h1>
     <div class="start-emojis">
-      <div class="start-smoke">💨</div>
+      <div class="start-smoke" id="startSmoke">💨</div>
       <div class="start-hero" id="startHero">🐑</div>
     </div>
 
@@ -300,8 +321,10 @@
   const urlParams = new URLSearchParams(location.search);
   const cfgId = urlParams.get('id');
   const localMode = urlParams.get('local') === '1';
+  const previewMode = urlParams.get('preview') === '1';
 
-  const JSON_BASE = "./data/"; // важно: /puk/data/<id>.json
+  // ВАЖНО: JSON лежит в nikashum93/texts/data/<id>.json
+  const JSON_BASE = "https://nikashum93.github.io/texts/data/";
 
   function shuffle(arr){
     const a = arr.slice();
@@ -316,7 +339,7 @@
     return typeof s === 'string' && (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:'));
   }
   function looksLikeImgUrl(s){
-    return looksLikeUrl(s) && (/\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(s) || s.startsWith('data:image/'));
+    return looksLikeUrl(s) && (/(\.png|\.jpg|\.jpeg|\.gif|\.webp)(\?.*)?$/i.test(s) || s.startsWith('data:image/'));
   }
   function renderContent(el, data){
     el.innerHTML = '';
@@ -352,27 +375,72 @@
       mirrorHero: false,
       obstacles: { ground:['🌲'], good:['🌟'], bad:['🦅'] }
     },
-    sounds: { mus:'', ding:'', buzz:'', coin:'', crash:'', win:'' },
+    sounds: { mus:'https://assets.mixkit.co/active_storage/stock_music/96/96-preview.mp3', ding:'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3', buzz:'https://assets.mixkit.co/active_storage/sfx/257/257-preview.mp3', coin:'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3', crash:'https://assets.mixkit.co/active_storage/sfx/2042/2042-preview.mp3', win:'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3' },
     tasks: []
   };
 
+  function mergeCfg(base, inc){
+    const out = Object.assign({}, base, inc || {});
+    out.ui = Object.assign({}, base.ui || {}, inc?.ui || {});
+    out.gameplay = Object.assign({}, base.gameplay || {}, inc?.gameplay || {});
+    out.assets = Object.assign({}, base.assets || {}, inc?.assets || {});
+    out.assets.obstacles = Object.assign({}, (base.assets||{}).obstacles || {}, (inc?.assets||{}).obstacles || {});
+    out.sounds = Object.assign({}, base.sounds || {}, inc?.sounds || {});
+    // arrays overwrite
+    if(Array.isArray(inc?.tasks)) out.tasks = inc.tasks.slice();
+    return out;
+  }
+
+  // Preview: receive config live from the editor (works cross-origin)
+  window.addEventListener('message', (e)=>{
+    const data = e?.data;
+    if(!data || data.type !== 'SHEEP_CFG') return;
+    try{
+      CFG = mergeCfg(CFG, data.cfg);
+      applyCfgToUI();
+      if(typeof Game !== 'undefined' && Game.resetToStart) Game.resetToStart();
+    }catch(err){}
+  });
+
+
   async function loadConfig(){
-    if(localMode){
+    if(localMode || previewMode){
       try{
-        const raw = sessionStorage.getItem('__sheep_cfg__');
+        const raw = localStorage.getItem('__sheep_cfg__'); // optional (same-origin preview)
         if(raw) CFG = JSON.parse(raw);
       }catch(e){}
+      // if previewMode and nothing in localStorage, we will wait for postMessage
       return;
     }
-
     if(!cfgId) return;
     try{
       const res = await fetch(`${JSON_BASE}${encodeURIComponent(cfgId)}.json?v=${Date.now()}`, { cache:'no-store' });
       const cfg = await res.json();
       CFG = Object.assign({}, CFG, cfg || {});
     }catch(e){
-      console.warn('Config load failed', e);
+      // quietly ignore (teacher-friendly)
     }
+  }
+
+  function ensureMathJax(){
+    if(!CFG.math) return;
+    if(document.getElementById('MathJax-script')) return;
+    const mj = document.createElement('script');
+    mj.id = 'MathJax-script';
+    mj.async = true;
+    mj.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+    document.head.appendChild(mj);
+  }
+  function typesetMaybe(el){
+    if(!CFG.math) return;
+    const tryTypeset = ()=>{
+      if(window.MathJax && window.MathJax.typesetPromise){
+        window.MathJax.typesetPromise([el]).catch(()=>{});
+      }else{
+        setTimeout(tryTypeset, 120);
+      }
+    };
+    tryTypeset();
   }
 
   function applyCfgToUI(){
@@ -385,14 +453,11 @@
     }
 
     // hero mirror scale
-    const heroScale = CFG.assets?.mirrorHero ? -1 : 1;
-    document.documentElement.style.setProperty('--hero-scale', String(heroScale));
+    document.documentElement.style.setProperty('--hero-scale', (CFG.assets?.mirrorHero ? -1 : 1));
 
-    // title + start hero
+    // title + heroes
     document.getElementById('uiTitle').textContent = (CFG.ui?.title || 'SHEEP RUN');
     renderContent(document.getElementById('startHero'), (CFG.assets?.hero || '🐑'));
-
-    // in-game hero
     renderContent(document.getElementById('hero'), (CFG.assets?.hero || '🐑'));
 
     // buttons text
@@ -405,27 +470,64 @@
     document.getElementById('inputPanel').style.display  = (mode === 'input')  ? 'flex' : 'none';
 
     // sounds urls
-    const mus = document.getElementById('mus-bg');
-    const setSrc = (el, url)=>{ el.src = url || ''; el.load(); };
+    const setSrc = (el, url)=>{ el.src = url || ''; try{ el.load(); }catch(e){} };
+    setSrc(document.getElementById('mus-bg'),      CFG.sounds?.mus);
+    setSrc(document.getElementById('sfx-ding'),    CFG.sounds?.ding);
+    setSrc(document.getElementById('sfx-buzz'),    CFG.sounds?.buzz);
+    setSrc(document.getElementById('sfx-coin'),    CFG.sounds?.coin);
+    setSrc(document.getElementById('sfx-crash'),   CFG.sounds?.crash);
+    setSrc(document.getElementById('sfx-win'),     CFG.sounds?.win);
 
-    setSrc(mus, CFG.sounds?.mus);
-    setSrc(document.getElementById('sfx-ding'),  CFG.sounds?.ding);
-    setSrc(document.getElementById('sfx-buzz'),  CFG.sounds?.buzz);
-    setSrc(document.getElementById('sfx-coin'),  CFG.sounds?.coin);
-    setSrc(document.getElementById('sfx-crash'), CFG.sounds?.crash);
-    setSrc(document.getElementById('sfx-win'),   CFG.sounds?.win);
-
-    // MathJax dynamic include
-    if(CFG.math){
-      const mj = document.createElement('script');
-      mj.id = 'MathJax-script';
-      mj.async = true;
-      mj.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-      document.head.appendChild(mj);
-    }
+    ensureMathJax();
   }
 
-  // -------- AUDIO (fix music) --------
+  // -------- AUDIO (music + safe fallback sfx) --------
+  const AudioFallback = {
+    ctx:null,
+    ensure(){
+      if(this.ctx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return;
+      this.ctx = new AC();
+    },
+    beep(freq=440, ms=120, type='sine', gain=0.08){
+      this.ensure();
+      if(!this.ctx) return;
+      const o = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.value = gain;
+      o.connect(g); g.connect(this.ctx.destination);
+      o.start();
+      o.stop(this.ctx.currentTime + ms/1000);
+    },
+    noise(ms=120, gain=0.06){
+      this.ensure();
+      if(!this.ctx) return;
+      const bufferSize = Math.floor(this.ctx.sampleRate * (ms/1000));
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++) data[i] = (Math.random()*2-1) * 0.6;
+      const src = this.ctx.createBufferSource();
+      src.buffer = buffer;
+      const g = this.ctx.createGain();
+      g.gain.value = gain;
+      src.connect(g); g.connect(this.ctx.destination);
+      src.start();
+    },
+    sfx(kind){
+      // simple "base sounds" if URLs are empty
+      switch(kind){
+        case 'ding':  this.beep(880, 110, 'triangle', 0.08); break;
+        case 'coin':  this.beep(1040, 90, 'square', 0.06); this.beep(1560, 70, 'square', 0.04); break;
+        case 'buzz':  this.beep(140, 180, 'sawtooth', 0.07); break;
+        case 'crash': this.noise(160, 0.08); this.beep(90, 120, 'sine', 0.06); break;
+        case 'win':   this.beep(660, 130, 'triangle', 0.07); setTimeout(()=>this.beep(880, 170, 'triangle', 0.07), 140); break;
+      }
+    }
+  };
+
   const AudioSys = {
     mus: null,
     vMus: 0.5,
@@ -433,16 +535,11 @@
     unlocked: false,
     init(){
       this.mus = document.getElementById('mus-bg');
-      document.getElementById('slider-mus').addEventListener('input', (e)=>{
-        this.setVol('mus', e.target.value);
-      });
-      document.getElementById('slider-sfx').addEventListener('input', (e)=>{
-        this.setVol('sfx', e.target.value);
-      });
+      document.getElementById('slider-mus').addEventListener('input', (e)=>this.setVol('mus', e.target.value));
+      document.getElementById('slider-sfx').addEventListener('input', (e)=>this.setVol('sfx', e.target.value));
 
       document.getElementById('musIcon').addEventListener('click', ()=>{
         this.unlock();
-        // toggle play/pause
         if(this.mus && !this.mus.paused) this.mus.pause();
         else this.playMusic();
       });
@@ -455,7 +552,7 @@
     unlock(){
       if(this.unlocked) return;
       this.unlocked = true;
-      // Try to start music silently then set volume
+      try{ AudioFallback.ensure(); if(AudioFallback.ctx && AudioFallback.ctx.state === 'suspended') AudioFallback.ctx.resume().catch(()=>{}); }catch(e){}
       this.playMusic(true);
     },
     setVol(t,v){
@@ -470,23 +567,19 @@
     },
     play(id){
       const el = document.getElementById('sfx-'+id);
-      if(!el || !el.src) return;
-      el.volume = this.vSfx;
-      el.currentTime = 0;
-      el.play().catch(()=>{});
+      if(el && el.src){
+        el.volume = this.vSfx;
+        el.currentTime = 0;
+        el.play().catch(()=>{});
+      }else{
+        AudioFallback.sfx(id);
+      }
     },
     playMusic(forceUnlock=false){
       if(!this.mus || !this.mus.src) return;
-      if(forceUnlock){
-        this.mus.volume = 0.0001;
-      }else{
-        this.mus.volume = this.vMus;
-      }
+      this.mus.volume = forceUnlock ? 0.0001 : this.vMus;
       this.mus.play().then(()=>{
-        if(forceUnlock){
-          // restore volume after successful play
-          setTimeout(()=>{ this.mus.volume = this.vMus; }, 0);
-        }
+        if(forceUnlock) setTimeout(()=>{ this.mus.volume = this.vMus; }, 0);
       }).catch(()=>{});
     }
   };
@@ -548,7 +641,7 @@
     },
 
     showPrep(){
-      AudioSys.unlock(); // важный фикс: музыка/звук разрешены после клика
+      AudioSys.unlock();
       document.getElementById('start-screen').style.display='none';
       document.getElementById('prep-screen').style.display='flex';
       this.setupTutorialIcons();
@@ -593,9 +686,7 @@
       document.getElementById('btn-left').onclick  = ()=>this.handleChoice(0);
       document.getElementById('btn-right').onclick = ()=>this.handleChoice(1);
       document.getElementById('btnOk').onclick = ()=>this.handleInputOk();
-      document.getElementById('answerInput').onkeydown = (e)=>{
-        if(e.key === 'Enter') this.handleInputOk();
-      };
+      document.getElementById('answerInput').onkeydown = (e)=>{ if(e.key === 'Enter') this.handleInputOk(); };
 
       this.elHero.className = 'hero-char bobbing';
       this.updateUI();
@@ -616,7 +707,6 @@
         }, this.spawnInterval);
       }, 2500);
 
-      // music starts AFTER user gesture → already unlocked in showPrep()
       AudioSys.playMusic();
     },
 
@@ -668,14 +758,6 @@
 
       document.querySelectorAll('.game-obj:not(.obj-caught)').forEach(obj=>{
         const oR=obj.getBoundingClientRect();
-
-        // progress by ground obstacle passing
-        if(obj.dataset.isObstacle && !obj.dataset.passed && oR.right < hX){
-          obj.dataset.passed="true";
-          // можно считать как "прошёл препятствие", но вопросы двигаем отдельно (по ответам / по порядку)
-          // оставим только визуальный прогресс-бар по вопросам
-        }
-
         const oX=oR.left+oR.width*0.3;
         const oW=oR.width*0.4;
         const oT=oR.top+oR.height*0.3;
@@ -728,9 +810,7 @@
         return;
       }
 
-      // if ended
       if(this.qIndex >= this.qOrder.length){
-        // end reached
         this.gameOver(true);
         return;
       }
@@ -740,8 +820,8 @@
       this.currentTask = task;
 
       qt.textContent = task.question || '...';
+      typesetMaybe(qt);
 
-      // choice buttons fill
       if((CFG.mode||'choice') === 'choice'){
         const correct = (task.correct && task.correct[0]) ? task.correct[0] : 'OK';
         const wrong   = (task.wrong && task.wrong[0]) ? task.wrong[0] : 'NO';
@@ -757,7 +837,6 @@
           bR.textContent = correct; bR.dataset.correct="true";
         }
       }else{
-        // input mode: clear input
         const inp = document.getElementById('answerInput');
         inp.value = '';
         inp.focus();
@@ -808,12 +887,10 @@
       this.score += Math.floor(200*this.combo);
       this.combo = Math.min(this.combo + 0.5, 5.0);
 
-      // advance question
       this.qIndex++;
-      this.obstaclesPassed = this.qIndex; // прогресс-бар по вопросам
+      this.obstaclesPassed = this.qIndex;
       this.nextQuestion();
 
-      // win condition
       const need = Math.max(1, CFG.gameplay?.winQuestions || 10);
       if(this.qIndex >= need) this.gameOver(true);
     },
@@ -834,11 +911,29 @@
       clearInterval(this.mainInterval);
 
       document.getElementById('end-emoji').textContent = isWin ? '🏆' : '💀';
-      document.getElementById('end-title').textContent = isWin ? 'YOU WIN!' : 'TRY AGAIN';
+      document.getElementById('end-title').textContent = isWin ? 'YOU WIN!' : (CFG.ui?.gameover || 'TRY AGAIN');
       document.getElementById('end-score-text').textContent = (CFG.ui?.scoreLabel || 'Score: ') + this.score;
 
       document.getElementById('end-screen').style.display='flex';
       if(isWin) AudioSys.play('win');
+    },
+
+    resetToStart(){
+      // stop timers
+      this.isPlaying = false;
+      try{ clearInterval(this.spawnTimer); }catch(e){}
+      try{ clearInterval(this.mainInterval); }catch(e){}
+      // clear objects + UI
+      this.elObjs.innerHTML = '';
+      document.getElementById('end-screen').style.display='none';
+      document.getElementById('prep-screen').style.display='none';
+      document.getElementById('question-card').style.display='none';
+      document.getElementById('start-screen').style.display='flex';
+      document.getElementById('answerInput').value='';
+      // reflect new hero + tasks immediately
+      renderContent(document.getElementById('startHero'), (CFG.assets?.hero || '🐑'));
+      renderContent(this.elHero, (CFG.assets?.hero || '🐑'));
+      // start smoke already styled to fly left (no config needed)
     },
 
     randomItem(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
@@ -853,13 +948,11 @@
     AudioSys.setVol('mus', document.getElementById('slider-mus').value);
     AudioSys.setVol('sfx', document.getElementById('slider-sfx').value);
 
-    // difficulty buttons
     document.getElementById('diff-easy').onclick   = ()=>Game.setDifficulty('easy');
     document.getElementById('diff-medium').onclick = ()=>Game.setDifficulty('medium');
     document.getElementById('diff-hard').onclick   = ()=>Game.setDifficulty('hard');
     Game.setDifficulty('medium');
 
-    // start / again
     document.getElementById('btnStart').onclick = ()=>Game.showPrep();
     document.getElementById('btnAgain').onclick = ()=>location.reload();
   })();
