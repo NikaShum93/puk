@@ -381,6 +381,16 @@
   }
 
   // -------- CONFIG DEFAULTS --------
+  const UI_DEFAULTS = {
+    ru:{title:"SHEEP RUN", start:"ИГРАТЬ", again:"ЕЩЁ РАЗ", gameover:"ИГРА ОКОНЧЕНА", scoreLabel:"Счёт: "},
+    en:{title:"SHEEP RUN", start:"PLAY", again:"AGAIN", gameover:"GAME OVER", scoreLabel:"Score: "},
+    fr:{title:"SHEEP RUN", start:"JOUER", again:"REJOUER", gameover:"FIN DE PARTIE", scoreLabel:"Score : "},
+    de:{title:"SHEEP RUN", start:"SPIELEN", again:"NOCHMAL", gameover:"GAME OVER", scoreLabel:"Punkte: "},
+    es:{title:"SHEEP RUN", start:"JUGAR", again:"OTRA VEZ", gameover:"GAME OVER", scoreLabel:"Puntuación: "},
+    it:{title:"SHEEP RUN", start:"GIOCA", again:"DI NUOVO", gameover:"GAME OVER", scoreLabel:"Punteggio: "},
+    zh:{title:"SHEEP RUN", start:"开始", again:"再来一次", gameover:"游戏结束", scoreLabel:"得分："},
+    ja:{title:"SHEEP RUN", start:"スタート", again:"もう一回", gameover:"ゲームオーバー", scoreLabel:"スコア: "}
+  };
   let CFG = {
     lang: 'en',
     mode: 'choice',         // choice | input
@@ -528,6 +538,7 @@
   }
 
   function applyCfgToUI(){
+    const L = UI_DEFAULTS[CFG.lang] || UI_DEFAULTS.en;
     // transparency
     const app = document.getElementById('game-app');
     if(CFG.transparentBg){
@@ -548,13 +559,13 @@
     }
 
     // title + heroes
-    document.getElementById('uiTitle').textContent = (CFG.ui?.title || 'SHEEP RUN');
+    document.getElementById('uiTitle').textContent = (CFG.ui?.title || L.title || 'SHEEP RUN');
     renderContent(document.getElementById('startHero'), (CFG.assets?.hero || '🐑'));
     renderContent(document.getElementById('hero'), (CFG.assets?.hero || '🐑'));
 
     // buttons text
-    document.getElementById('btnStart').textContent = (CFG.ui?.start || 'START');
-    document.getElementById('btnAgain').textContent = (CFG.ui?.again || 'AGAIN');
+    document.getElementById('btnStart').textContent = (CFG.ui?.start || L.start || 'START');
+    document.getElementById('btnAgain').textContent = (CFG.ui?.again || L.again || 'AGAIN');
 
     // apply text size (vmin)
     const uiFont = parseFloat(CFG.ui?.fontSize || '');
@@ -641,7 +652,7 @@
     unlocked: false,
     init(){
       this.mus = document.getElementById('mus-bg');
-      document.getElementById('slider-mus').addEventListener('input', (e)=>this.setVol('mus', e.target.value));
+      document.getElementById('slider-mus').addEventListener('input', (e)=>{ this.unlock(); this.setVol('mus', e.target.value); this.playMusic(); });
       document.getElementById('slider-sfx').addEventListener('input', (e)=>this.setVol('sfx', e.target.value));
 
       document.getElementById('musIcon').addEventListener('click', ()=>{
@@ -784,7 +795,6 @@
       this.qIndex = 0;
       this.obstaclesPassed = 0;
       this.answerAccepted = false;
-      this.choiceLocked = false;
 
       // panels
       const mode = CFG.mode || 'choice';
@@ -802,6 +812,12 @@
       this.elHero.className = 'hero-char bobbing';
       this.updateUI();
       this.nextQuestion();
+
+      // apply current difficulty (default medium)
+      const activeDiff = (document.querySelector('.diff-btn.active')?.id || 'diff-medium').replace('diff-','');
+      this.setDifficulty(activeDiff);
+      // INPUT mode needs more time to type
+      if((CFG.mode||'choice') === 'input') this.spawnInterval = Math.round(this.spawnInterval * 3);
 
       if(this.mainInterval) clearInterval(this.mainInterval);
       this.mainInterval = setInterval(()=>this.mainLoop(), 50);
@@ -876,8 +892,8 @@
 
         // obstacle passed (ground) -> next question
         if(obj.dataset.isObstacle === "true" && !obj.dataset.passed && oR.right < hX){
-          obj.dataset.passed = "true";
-          this.onObstaclePassed();
+          // obstacle went past hero line
+          this.onObstaclePassed(obj);
         }
 
 
@@ -902,25 +918,27 @@
       });
     },
 
-    onObstaclePassed(){
-      // advance question only when an obstacle passed the hero
+    onObstaclePassed(obj){
+      // In INPUT mode: the player must have answered correctly before we count the jump.
+      const mode = (CFG.mode||'choice');
+      if(mode === 'input'){
+        if(!this.answerAccepted) return; // don't advance if no correct answer yet
+      }
+      if(obj) obj.dataset.passed = "true";
+
       this.obstaclesPassed = (this.obstaclesPassed || 0) + 1;
 
-      // unlock input / buttons
-      this.answerAccepted = false;
-      this.choiceLocked = false;
-
-      if((CFG.mode||'choice') === 'input'){
+      // INPUT mode: keep the typed answer until the jump is counted, then clear for next question.
+      if(mode === 'input'){
         const inp=document.getElementById('answerInput');
         inp.disabled = false;
         document.getElementById('btnOk').disabled = false;
         inp.value = '';
         inp.focus();
-      }else{
-        ['btn-left','btn-right','btn-a','btn-b','btn-c','btn-d'].forEach(id=>{
-          const b=document.getElementById(id); if(b) b.disabled = false;
-        });
       }
+
+      // reset state for next obstacle/question
+      this.answerAccepted = false;
 
       this.qIndex++;
       this.nextQuestion();
@@ -1016,7 +1034,6 @@
 
     handleChoiceBtn(btn){
       if(!this.isPlaying) return;
-      if(this.choiceLocked) return;
       if(!btn) return;
 
       if(btn.dataset.correct === "true"){
@@ -1048,29 +1065,26 @@
     },
 
     onAnswerCorrect(){
-      if(this.answerAccepted) return;
-
+      // Allow repeated jumps. Score/combo only once per obstacle.
       if(!this.elHero.classList.contains('jump-anim')){
         this.elHero.classList.add('jump-anim');
         setTimeout(()=>this.elHero.classList.remove('jump-anim'), 1000);
       }
-      AudioSys.play('ding');
-      this.score += Math.floor(200*this.combo);
-      this.combo = Math.min(this.combo + 0.5, 5.0);
 
-      // lock until obstacle passes
-      this.answerAccepted = true;
-      this.choiceLocked = true;
-
-      // in input mode keep the typed answer, just disable submit
-      if((CFG.mode||'choice') === 'input'){
-        document.getElementById('btnOk').disabled = true;
-        document.getElementById('answerInput').disabled = true;
+      if(!this.answerAccepted){
+        AudioSys.play('ding');
+        this.score += Math.floor(200*this.combo);
+        this.combo = Math.min(this.combo + 0.5, 5.0);
+        this.answerAccepted = true;
       }else{
-        // disable all choice buttons
-        ['btn-left','btn-right','btn-a','btn-b','btn-c','btn-d'].forEach(id=>{
-          const b=document.getElementById(id); if(b) b.disabled = true;
-        });
+        // already correct for this obstacle: just jump again (no extra points)
+        AudioSys.play('ding');
+      }
+
+      // INPUT mode: keep text, do NOT disable controls
+      if((CFG.mode||'choice') === 'input'){
+        document.getElementById('answerInput').disabled = false;
+        document.getElementById('btnOk').disabled = false;
       }
     },
 
@@ -1090,8 +1104,9 @@
       clearInterval(this.mainInterval);
 
       document.getElementById('end-emoji').textContent = isWin ? '🏆' : '💀';
-      document.getElementById('end-title').textContent = isWin ? 'YOU WIN!' : (CFG.ui?.gameover || 'TRY AGAIN');
-      document.getElementById('end-score-text').textContent = (CFG.ui?.scoreLabel || 'Score: ') + this.score;
+      const L = UI_DEFAULTS[CFG.lang] || UI_DEFAULTS.en;
+      document.getElementById('end-title').textContent = isWin ? 'YOU WIN!' : (CFG.ui?.gameover || L.gameover || 'TRY AGAIN');
+      document.getElementById('end-score-text').textContent = (CFG.ui?.scoreLabel || (L.scoreLabel||'Score: ')) + this.score;
 
       document.getElementById('end-screen').style.display='flex';
       if(isWin) AudioSys.play('win');
