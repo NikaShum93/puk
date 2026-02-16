@@ -9,7 +9,7 @@
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 
   <style>
-    :root { --move-speed: 3.5s; --hero-scale: 1; }
+    :root { --move-speed: 3.5s; --hero-scale: 1; --q-font: 8vmin; }
 
     * { box-sizing: border-box; }
     html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#333; }
@@ -62,7 +62,7 @@
       min-width:70%; max-width:90%; z-index:40; text-align:center;
       box-shadow:0 8px 0 rgba(0,0,0,0.05);
     }
-    #question-text{ font-size:8vmin; color:#333; margin:0; line-height:1.1; }
+    #question-text{ font-size:var(--q-font, 8vmin); color:#333; margin:0; line-height:1.1; }
 
     /* HERO */
     .hero-char{
@@ -122,6 +122,11 @@
     }
     .start-hero{
       position:relative;
+      width:22vh;
+      height:22vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       font-size:20vh;
       z-index:2;
       transform: scaleX(var(--hero-scale));
@@ -131,7 +136,7 @@
       position:absolute;
       left:50%;
       top:50%;
-      transform: translate(-130%, -35%) scaleX(-1);
+      transform: translate(-175%, -35%) scaleX(-1);
       font-size:12vh;
       z-index:1;
       animation:fartPuff 1.2s ease-out infinite;
@@ -391,12 +396,71 @@
     return out;
   }
 
+  function normalizeCfg(raw){
+    if(!raw) return {};
+    let cfg = raw;
+
+    // If editor packed everything into embeddedGameConfig
+    if(cfg.embeddedGameConfig){
+      cfg = Object.assign({}, cfg.embeddedGameConfig, cfg);
+      delete cfg.embeddedGameConfig;
+    }
+
+    // Audio key alias
+    if(cfg.audio && !cfg.sounds) cfg.sounds = cfg.audio;
+
+    // Questions alias
+    if(Array.isArray(cfg.questions) && !Array.isArray(cfg.tasks)){
+      cfg.tasks = cfg.questions.map(q=>{
+        // legacy {s,c,w}
+        if(q && (q.s !== undefined || q.c !== undefined)){
+          const correct = String(q.c ?? '').split('|').map(s=>s.trim()).filter(Boolean);
+          const wrong = String(q.w ?? '').split('|').map(s=>s.trim()).filter(Boolean);
+          return { question: String(q.s ?? '').trim(), correct, wrong };
+        }
+        // {question, correct, wrong}
+        const question = String(q.question ?? '').trim();
+        const corrRaw = q.correct ?? '';
+        const wrRaw = q.wrong ?? '';
+        const correct = Array.isArray(corrRaw) ? corrRaw : String(corrRaw).split('|');
+        const wrong = Array.isArray(wrRaw) ? wrRaw : String(wrRaw).split('|');
+        return {
+          question,
+          correct: correct.map(s=>String(s).trim()).filter(Boolean),
+          wrong: wrong.map(s=>String(s).trim()).filter(Boolean)
+        };
+      });
+      delete cfg.questions;
+    }
+
+    // If tasks exist but are in legacy shape {s,c,w}
+    if(Array.isArray(cfg.tasks)){
+      cfg.tasks = cfg.tasks.map(t=>{
+        if(t && (t.s !== undefined || t.c !== undefined)){
+          const correct = String(t.c ?? '').split('|').map(s=>s.trim()).filter(Boolean);
+          const wrong = String(t.w ?? '').split('|').map(s=>s.trim()).filter(Boolean);
+          return { question: String(t.s ?? '').trim(), correct, wrong };
+        }
+        const correct = Array.isArray(t.correct) ? t.correct : String(t.correct ?? '').split('|');
+        const wrong = Array.isArray(t.wrong) ? t.wrong : String(t.wrong ?? '').split('|');
+        return {
+          question: String(t.question ?? '').trim(),
+          correct: correct.map(s=>String(s).trim()).filter(Boolean),
+          wrong: wrong.map(s=>String(s).trim()).filter(Boolean)
+        };
+      });
+    }
+
+    return cfg;
+  }
+
+
   // Preview: receive config live from the editor (works cross-origin)
   window.addEventListener('message', (e)=>{
     const data = e?.data;
     if(!data || data.type !== 'SHEEP_CFG') return;
     try{
-      CFG = mergeCfg(CFG, data.cfg);
+      CFG = mergeCfg(CFG, normalizeCfg(data.cfg));
       applyCfgToUI();
       if(typeof Game !== 'undefined' && Game.resetToStart) Game.resetToStart();
     }catch(err){}
@@ -407,7 +471,7 @@
     if(localMode || previewMode){
       try{
         const raw = localStorage.getItem('__sheep_cfg__'); // optional (same-origin preview)
-        if(raw) CFG = JSON.parse(raw);
+        if(raw) CFG = mergeCfg(CFG, normalizeCfg(JSON.parse(raw)));
       }catch(e){}
       // if previewMode and nothing in localStorage, we will wait for postMessage
       return;
@@ -415,8 +479,8 @@
     if(!cfgId) return;
     try{
       const res = await fetch(`${JSON_BASE}${encodeURIComponent(cfgId)}.json?v=${Date.now()}`, { cache:'no-store' });
-      const cfg = await res.json();
-      CFG = Object.assign({}, CFG, cfg || {});
+      const cfg = normalizeCfg(await res.json());
+      CFG = mergeCfg(CFG, cfg || {});
     }catch(e){
       // quietly ignore (teacher-friendly)
     }
@@ -454,6 +518,14 @@
 
     // hero mirror scale
     document.documentElement.style.setProperty('--hero-scale', (CFG.assets?.mirrorHero ? -1 : 1));
+
+    // question font size (vmin)
+    if(CFG.ui && CFG.ui.fontSize){
+      const fs = parseFloat(CFG.ui.fontSize);
+      if(Number.isFinite(fs) && fs>0) document.documentElement.style.setProperty('--q-font', fs + 'vmin');
+    }else{
+      document.documentElement.style.setProperty('--q-font', '8vmin');
+    }
 
     // title + heroes
     document.getElementById('uiTitle').textContent = (CFG.ui?.title || 'SHEEP RUN');
