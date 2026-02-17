@@ -24,7 +24,27 @@
     }
     #game-app.transparent{ background:transparent !important; }
 
-    #sky-area{ position:relative; flex:1; width:100%; overflow:hidden; }
+    #sky-area{
+      position:relative; flex:1; width:100%; overflow:hidden;
+      background: linear-gradient(#6fd5ff 0%, #b8ecff 55%, #eaf9ff 100%);
+    }
+    .cloud{
+      position:absolute; top:10%; left:110%;
+      width:22vmin; height:12vmin;
+      background:rgba(255,255,255,.85);
+      border-radius:999px;
+      filter: blur(.2px);
+      box-shadow: -6vmin 2vmin 0 0 rgba(255,255,255,.85),
+                  -11vmin 1vmin 0 0 rgba(255,255,255,.75),
+                  6vmin 2vmin 0 0 rgba(255,255,255,.75),
+                  10vmin 1vmin 0 0 rgba(255,255,255,.7);
+      animation: cloudMove 22s linear infinite;
+      opacity:.9;
+      pointer-events:none;
+    }
+    @keyframes cloudMove{ from{ transform:translateX(0);} to{ transform:translateX(-140vw);} }
+    #question-text img{ max-width:100%; max-height:28vh; display:block; margin:0 auto; }
+    .action-btn img{ max-height:60%; max-width:90%; object-fit:contain; }
     #ground-area{
       position:relative; flex:none; width:100%; height:auto;
       padding:10px 0;
@@ -286,6 +306,10 @@
   </div>
 
   <div id="sky-area">
+      <div class="cloud" style="top:10%; animation-duration:26s; opacity:.85;"></div>
+      <div class="cloud" style="top:28%; animation-duration:32s; animation-delay:-10s; opacity:.7; transform:scale(.8);"></div>
+      <div class="cloud" style="top:18%; animation-duration:38s; animation-delay:-20s; opacity:.6; transform:scale(1.1);"></div>
+
     <div class="hud-container">
       <div id="lives-display" class="lives-box">❤️❤️❤️❤️❤️</div>
       <div class="hud-right">
@@ -809,7 +833,7 @@
       document.getElementById('btnOk').onclick = ()=>this.handleInputOk();
       document.getElementById('answerInput').onkeydown = (e)=>{ if(e.key === 'Enter') this.handleInputOk(); };
 
-      this.elHero.className = 'hero-char bobbing';
+      this.elHero.className = 'hero-char' + ((CFG.assets && CFG.assets.heroBobbing===false) ? '' : ' bobbing');
       this.updateUI();
       this.nextQuestion();
 
@@ -969,7 +993,7 @@
       const qt = document.getElementById('question-text');
 
       if(!CFG.tasks || !CFG.tasks.length){
-        qt.textContent = '...';
+        renderContent(qt, '...');
         this.currentTask = null;
         return;
       }
@@ -983,7 +1007,7 @@
       const task = CFG.tasks[idx] || { question:'...', correct:['OK'], wrong:['NO'] };
       this.currentTask = task;
 
-      qt.textContent = task.question || '...';
+      renderContent(qt, task.question || '...');
       typesetMaybe(qt);
 
       const mode = (CFG.mode||'choice');
@@ -999,11 +1023,11 @@
         bL.disabled = false; bR.disabled=false;
 
         if(Math.random()>0.5){
-          bL.textContent = correct; bL.dataset.correct="true";
-          bR.textContent = wrong;   bR.dataset.correct="false";
+          renderContent(bL, correct); bL.dataset.correct="true";
+          renderContent(bR, wrong); bR.dataset.correct="false";
         }else{
-          bL.textContent = wrong;   bL.dataset.correct="false";
-          bR.textContent = correct; bR.dataset.correct="true";
+          renderContent(bL, wrong); bL.dataset.correct="false";
+          renderContent(bR, correct); bR.dataset.correct="true";
         }
       }else if(mode === 'choice4'){
         const correct = (task.correct && task.correct[0]) ? task.correct[0] : 'OK';
@@ -1017,7 +1041,7 @@
           const b=document.getElementById(id);
           if(!b) return;
           b.disabled=false;
-          b.textContent = shuffled[i].t;
+          renderContent(b, shuffled[i].t);
           b.dataset.correct = shuffled[i].ok ? "true" : "false";
         });
       }else{
