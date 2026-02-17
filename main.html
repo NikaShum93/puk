@@ -79,7 +79,7 @@
     .q-card{
       position:absolute; top:18%; left:50%; transform:translateX(-50%);
       background:#fff; padding:25px 50px; border-radius:30px; border:6px solid #ECEFF1;
-      min-width:70%; max-width:90%; z-index:40; text-align:center;
+      min-width:70%; max-width:90%; z-index:50; text-align:center;
       box-shadow:0 8px 0 rgba(0,0,0,0.05);
     }
     #question-text{ font-size:var(--q-font, 8vmin); color:#333; margin:0; line-height:1.1; }
@@ -88,20 +88,20 @@
     .hero-char{
       position:absolute; bottom:0; left:15%;
       width:15vh; height:15vh;
-      z-index:10; display:flex; align-items:center; justify-content:center;
+      z-index:25; display:flex; align-items:center; justify-content:center;
       font-size:13vh;
       transform: scaleX(var(--hero-scale));
     }
     .bobbing{ animation: runBob 0.4s infinite alternate; }
     @keyframes runBob { from{transform:translateY(0) scaleX(var(--hero-scale));} to{transform:translateY(-1.5vh) scaleX(var(--hero-scale));} }
     .jump-anim{ animation: jumpArc 1.0s cubic-bezier(0.4,0,0.2,1) forwards; }
-    @keyframes jumpArc { 0%,100%{ bottom:0; transform:scaleX(var(--hero-scale)); } 50%{ bottom:45%; transform:scaleX(var(--hero-scale)); } }
+    @keyframes jumpArc { 0%,100%{ bottom:0; transform:scaleX(var(--hero-scale)); } 50%{ bottom:32%; transform:scaleX(var(--hero-scale)); } }
     .blink-anim{ animation: blink-effect 0.2s infinite; filter:sepia(1) saturate(10) hue-rotate(-50deg); }
     @keyframes blink-effect{ 50%{ opacity:0.4; } }
 
     /* OBJECTS */
     .game-obj{
-      position:absolute; left:110%; z-index:5;
+      position:absolute; left:110%; z-index:20;
       font-size:14vh; width:14vh; height:14vh;
       display:flex; align-items:center; justify-content:center;
       transition:opacity 0.2s;
@@ -109,7 +109,7 @@
     .obj-move{ animation: slideLeft var(--move-speed) linear forwards; }
     @keyframes slideLeft{ from{left:110%} to{left:-40%} }
     .pos-ground{ bottom:0; }
-    .pos-air{ bottom:38%; }
+    .pos-air{ bottom:22%; }
     .obj-caught{ animation: catch-pop 0.4s ease-out forwards; pointer-events:none; }
     @keyframes catch-pop{ 0%{transform:scale(1);opacity:1;} 100%{transform:scale(1.8);opacity:0;} }
 
@@ -289,20 +289,20 @@
 
   <div id="prep-screen" class="overlay">
     <div class="tutorial-box">
-      <h2 style="margin-top:0; color:#4FC3F7; font-size:6vmin;">READY?</h2>
+      <h2 id="prepTitle" style="margin-top:0; color:#4FC3F7; font-size:6vmin;">READY?</h2>
       <div class="tut-grid">
         <div>
-          <div style="color:#66BB6A; margin-bottom:10px; font-size:4vmin;">COLLECT</div>
+          <div id="prepCollect" style="color:#66BB6A; margin-bottom:10px; font-size:4vmin;">COLLECT</div>
           <div id="tut-good-list" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
         </div>
         <div>
-          <div style="color:#FF5252; margin-bottom:10px; font-size:4vmin;">AVOID</div>
+          <div id="prepAvoid" style="color:#FF5252; margin-bottom:10px; font-size:4vmin;">AVOID</div>
           <div id="tut-bad-list" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
         </div>
       </div>
     </div>
     <div id="countdown" class="countdown-text">5</div>
-    <div style="font-size:30px;">GET READY!</div>
+    <div id="prepHint" style="font-size:30px;">GET READY!</div>
   </div>
 
   <div id="sky-area">
@@ -415,6 +415,18 @@
     zh:{title:"SHEEP RUN", start:"开始", again:"再来一次", gameover:"游戏结束", scoreLabel:"得分："},
     ja:{title:"SHEEP RUN", start:"スタート", again:"もう一回", gameover:"ゲームオーバー", scoreLabel:"スコア: "}
   };
+
+  const PREP_TEXTS = {
+    ru:{ready:"ГОТОВЫ?", collect:"СОБИРАЙ", avoid:"ИЗБЕГАЙ", hint:"ПРИГОТОВЬСЯ!"},
+    en:{ready:"READY?", collect:"COLLECT", avoid:"AVOID", hint:"GET READY!"},
+    fr:{ready:"PRÊT ?", collect:"RAMASSE", avoid:"ÉVITE", hint:"PRÉPARE-TOI !"},
+    de:{ready:"BEREIT?", collect:"SAMMELN", avoid:"AUSWEICHEN", hint:"BEREIT MACHEN!"},
+    es:{ready:"¿LISTO?", collect:"COGE", avoid:"EVITA", hint:"¡PREPÁRATE!"},
+    it:{ready:"PRONTO?", collect:"RACCOGLI", avoid:"EVITA", hint:"PREPARATI!"},
+    zh:{ready:"准备好了吗？", collect:"收集", avoid:"躲避", hint:"准备！"},
+    ja:{ready:"準備OK？", collect:"集めよう", avoid:"よけよう", hint:"準備して！"}
+  };
+
   let CFG = {
     lang: 'en',
     mode: 'choice',         // choice | input
@@ -619,7 +631,15 @@
     setSrc(document.getElementById('sfx-crash'),   CFG.sounds?.crash);
     setSrc(document.getElementById('sfx-win'),     CFG.sounds?.win);
 
-    ensureMathJax();
+    
+    // prep/instruction texts
+    const P = PREP_TEXTS[CFG.lang] || PREP_TEXTS.en;
+    const st = (id, val)=>{ const el=document.getElementById(id); if(el) el.textContent = val; };
+    st('prepTitle',  P.ready);
+    st('prepCollect',P.collect);
+    st('prepAvoid',  P.avoid);
+    st('prepHint',   P.hint);
+ensureMathJax();
   }
 
   // -------- AUDIO (music + safe fallback sfx) --------
@@ -847,6 +867,7 @@
       this.mainInterval = setInterval(()=>this.mainLoop(), 50);
 
       if(this.spawnTimer) clearInterval(this.spawnTimer);
+      const firstDelay = ((CFG.mode||'choice')==='input') ? 4500 : 2500;
       setTimeout(()=>{
         if(!this.isPlaying) return;
         this.spawnObject('ground');
@@ -856,7 +877,7 @@
           this.spawnObject('ground');
           setTimeout(()=>{ if(this.isPlaying) this.spawnObject('air'); }, this.spawnInterval/2);
         }, this.spawnInterval);
-      }, 2500);
+      }, firstDelay);
 
       AudioSys.playMusic();
     },
