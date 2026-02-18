@@ -474,6 +474,25 @@
     return out;
   }
 
+  // ✅ NEW: remove empty lines/tasks completely (question+answers all empty)
+  function cleanTasks(tasks){
+    if(!Array.isArray(tasks)) return [];
+    return tasks
+      .map(t => ({
+        question: String(t?.question ?? '').replace(/\r/g,'').trim(),
+        correct: (Array.isArray(t?.correct) ? t.correct : String(t?.correct ?? '').split('|'))
+          .map(s=>String(s).trim()).filter(Boolean),
+        wrong: (Array.isArray(t?.wrong) ? t.wrong : String(t?.wrong ?? '').split('|'))
+          .map(s=>String(s).trim()).filter(Boolean),
+      }))
+      .filter(t => {
+        const hasQ = t.question.length > 0;
+        const hasC = t.correct.length > 0;
+        const hasW = t.wrong.length > 0;
+        return hasQ || hasC || hasW;
+      });
+  }
+
   function normalizeCfg(raw){
     if(!raw) return {};
     let cfg = raw;
@@ -522,6 +541,9 @@
         };
       });
     }
+
+    // ✅ NEW: ensure empty lines are removed after normalization
+    if(Array.isArray(cfg.tasks)) cfg.tasks = cleanTasks(cfg.tasks);
 
     return cfg;
   }
