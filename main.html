@@ -262,6 +262,7 @@
 <div id="game-app">
   <div id="start-screen" class="overlay">
     <h1 class="start-title" id="uiTitle">SHEEP RUN</h1>
+    <div id="cfgNote" style="margin-top:8px;font-size:16px;opacity:.85;max-width:85vw;"></div>
     <div class="start-emojis">
       <div class="start-smoke" id="startSmoke">💨</div>
       <div class="start-hero" id="startHero">🐑</div>
@@ -547,8 +548,9 @@
       const res = await fetch(`${JSON_BASE}${encodeURIComponent(cfgId)}.json?v=${Date.now()}`, { cache:'no-store' });
       const cfg = normalizeCfg(await res.json());
       CFG = mergeCfg(CFG, cfg || {});
+      try{ const n=document.getElementById('cfgNote'); if(n) n.textContent=''; }catch(_e){}
     }catch(e){
-      // quietly ignore (teacher-friendly)
+      try{ const n=document.getElementById('cfgNote'); if(n){ n.textContent = (cfgId ? ('⚠️ Не найден набор настроек: ' + cfgId) : ''); } }catch(_e){}
     }
   }
 
