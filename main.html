@@ -122,17 +122,6 @@
     @keyframes float-up{ 0%{transform:translateY(0);opacity:1;} 100%{transform:translateY(-100px);opacity:0;} }
 
     
-        /* choice 4 layout */
-        .choice4-panel{
-            width:100%;
-            display:grid;
-            grid-template-columns: 1fr 1fr;
-            gap:16px;
-            justify-items:stretch;
-            align-items:center;
-        }
-        .choice4-panel .action-btn{ width:100%; padding:16px 18px; }
-
         /* OVERLAYS */
     .overlay{
       position:absolute; inset:0; z-index:200;
@@ -336,16 +325,7 @@
       <button id="btn-left" class="action-btn">A</button>
       <button id="btn-right" class="action-btn">B</button>
     </div>
-
-    <!-- choice mode (4) -->
-    <div id="choice4Panel" class="choice4-panel" style="display:none;">
-      <button id="btn-a" class="action-btn">A</button>
-      <button id="btn-b" class="action-btn">B</button>
-      <button id="btn-c" class="action-btn">C</button>
-      <button id="btn-d" class="action-btn">D</button>
-    </div>
-
-    <!-- input mode -->
+<!-- input mode -->
     <div id="inputPanel" class="input-panel" style="display:none;">
       <input id="answerInput" class="answer-input" placeholder="Type answer...">
       <button id="btnOk" class="ok-btn">OK</button>
@@ -621,8 +601,7 @@
     // mode panels
     const mode = CFG.mode || 'choice';
     document.getElementById('choicePanel').style.display  = (mode === 'choice')  ? 'flex' : 'none';
-    document.getElementById('choice4Panel').style.display = (mode === 'choice4') ? 'grid' : 'none';
-    document.getElementById('inputPanel').style.display   = (mode === 'input')   ? 'flex' : 'none';
+        document.getElementById('inputPanel').style.display   = (mode === 'input')   ? 'flex' : 'none';
 
     // sounds urls
     const setSrc = (el, url)=>{ el.src = url || ''; try{ el.load(); }catch(e){} };
@@ -845,7 +824,7 @@ ensureMathJax();
       // panels
       const mode = CFG.mode || 'choice';
       document.getElementById('choicePanel').style.display  = (mode==='choice') ? 'flex' : 'none';
-      document.getElementById('choice4Panel').style.display = (mode==='choice4') ? 'grid' : 'none';
+      document.getElementById('choicePanel').style.display = (mode==='choice') ? 'grid' : 'none';
       document.getElementById('inputPanel').style.display   = (mode==='input')  ? 'flex' : 'none';
 
       // bind controls
@@ -1052,21 +1031,23 @@ ensureMathJax();
           renderContent(bL, wrong); bL.dataset.correct="false";
           renderContent(bR, correct); bR.dataset.correct="true";
         }
-      }else if(mode === 'choice4'){
+      }else if(mode === 'choice'){
         const correct = (task.correct && task.correct[0]) ? task.correct[0] : 'OK';
         const wrongPool = (task.wrong && task.wrong.length) ? task.wrong.slice() : ['NO','NOPE','WRONG'];
         while(wrongPool.length < 3) wrongPool.push(wrongPool[wrongPool.length-1] || 'NO');
 
-        const opts = [correct, wrongPool[0], wrongPool[1], wrongPool[2]];
-        const shuffled = shuffle(opts.map((t,i)=>({t, ok: i===0})));
-        const ids = ['btn-a','btn-b','btn-c','btn-d'];
-        ids.forEach((id, i)=>{
-          const b=document.getElementById(id);
-          if(!b) return;
-          b.disabled=false;
-          renderContent(b, shuffled[i].t);
-          b.dataset.correct = shuffled[i].ok ? "true" : "false";
-        });
+        const wrong = wrongPool[0] || 'NO';
+        // Randomize left/right
+        const leftIsCorrect = Math.random() > 0.5;
+        const bA = document.getElementById('btn-a');
+        const bB = document.getElementById('btn-b');
+        if(bA && bB){
+          bA.disabled = false; bB.disabled = false;
+          renderContent(bA, leftIsCorrect ? correct : wrong);
+          renderContent(bB, leftIsCorrect ? wrong : correct);
+          bA.dataset.correct = leftIsCorrect ? "true" : "false";
+          bB.dataset.correct = leftIsCorrect ? "false" : "true";
+        }
       }else{
         const inp = document.getElementById('answerInput');
         // keep user's text unless we are switching task; we do clear on obstacle passed
