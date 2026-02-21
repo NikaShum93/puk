@@ -790,41 +790,49 @@
     mainInterval:null,
     spawnTimer:null,
 
-    setDifficulty(mode){
-      // Base is EASY; Medium/Hard are computed from multipliers
-      const gp = (CFG && CFG.gameplay) ? CFG.gameplay : {};
-      const baseSpawnMs = Number.isFinite(+gp.diffBaseSpawnMs) ? +gp.diffBaseSpawnMs : 8500; // ms between obstacles (easy)
-      const baseMoveSpeed = Number.isFinite(+gp.diffBaseMoveSpeed) ? +gp.diffBaseMoveSpeed : 6.0; // lower = slower world
+   setDifficulty(mode){
+  // защита от случайного event вместо строки
+  if (typeof mode !== 'string') return;
+  if (!['easy','medium','hard'].includes(mode)) return;
 
-      const medMult  = Number.isFinite(+gp.diffMedMult)  ? +gp.diffMedMult  : 0.88;
-      const hardMult = Number.isFinite(+gp.diffHardMult) ? +gp.diffHardMult : 0.76;
+  // Base is EASY; Medium/Hard are computed from multipliers
+  const gp = (CFG && CFG.gameplay) ? CFG.gameplay : {};
+  const baseSpawnMs = Number.isFinite(+gp.diffBaseSpawnMs) ? +gp.diffBaseSpawnMs : 8500;
+  const baseMoveSpeed = Number.isFinite(+gp.diffBaseMoveSpeed) ? +gp.diffBaseMoveSpeed : 6.0;
 
-      // helper
-      const clamp = (v,min,max)=>Math.max(min, Math.min(max, v));
+  const medMult  = Number.isFinite(+gp.diffMedMult)  ? +gp.diffMedMult  : 0.88;
+  const hardMult = Number.isFinite(+gp.diffHardMult) ? +gp.diffHardMult : 0.76;
 
-      let move = baseMoveSpeed;
-      let spawn = baseSpawnMs;
+  const clamp = (v,min,max)=>Math.max(min, Math.min(max, v));
 
-      if(mode==='hard'){ move = baseMoveSpeed*hardMult; spawn = baseSpawnMs*hardMult; }
-      else if(mode==='medium'){ move = baseMoveSpeed*medMult; spawn = baseSpawnMs*medMult; }
-      else { /* easy */ }
+  let move = baseMoveSpeed;
+  let spawn = baseSpawnMs;
 
-      // safety clamps (so nothing breaks)
-      move = clamp(move, 2.0, 20.0);
-      spawn = clamp(spawn, 1200, 20000);
+  if(mode === 'hard'){
+    move = baseMoveSpeed * hardMult;
+    spawn = baseSpawnMs * hardMult;
+  }else if(mode === 'medium'){
+    move = baseMoveSpeed * medMult;
+    spawn = baseSpawnMs * medMult;
+  }
 
-      document.querySelectorAll('.diff-btn').forEach(btn=>btn.classList.remove('active'));
-      document.querySelector(`[data-mode="${mode}"]`)?.classList.add('active');
+  move = clamp(move, 2.0, 20.0);
+  spawn = clamp(spawn, 1200, 20000);
 
-      difficulty=mode;
-      moveSpeedSec=move;
-      spawnInterval=spawn;
+  // ✅ подсветка кнопки по id (а не data-mode)
+  document.querySelectorAll('.diff-btn').forEach(btn=>btn.classList.remove('active'));
+  const btn = document.getElementById('diff-' + mode);
+  if (btn) btn.classList.add('active');
 
-      // input mode is slower by design (gives more time to type)
-      if(CFG.mode==='input'){
-        spawnInterval*=2.2;
-      }
-    },
+  // ✅ применяем к игре
+  document.documentElement.style.setProperty('--move-speed', `${move}s`);
+  this.spawnInterval = Math.round(spawn);
+
+  // input mode — чуть медленнее (для ввода ответа)
+  if((CFG.mode || 'choice') === 'input'){
+    this.spawnInterval = Math.round(this.spawnInterval * 2.2);
+  }
+},
 
     setupTutorialIcons(){
       const gl = document.getElementById('tut-good-list');
@@ -908,8 +916,6 @@
       const activeDiff = (document.querySelector('.diff-btn.active')?.id || 'diff-medium').replace('diff-','');
       this.setDifficulty(activeDiff);
 
-      if((CFG.mode||'choice') === 'input') this.spawnInterval = Math.round(this.spawnInterval * 2.2);
-
       if(this.mainInterval) clearInterval(this.mainInterval);
       this.mainInterval = setInterval(()=>this.mainLoop(), 50);
 
@@ -919,7 +925,6 @@
         if(!this.isPlaying) return;
         this.spawnObject('ground');
         if(CFG.gameplay?.enableAir !== false){
-          if(CFG.gameplay?.enableAir !== false){
           setTimeout(()=>{ if(this.isPlaying) this.spawnObject('air'); }, this.spawnInterval/2);
         }
         }
@@ -935,43 +940,57 @@
       AudioSys.playMusic();
     },
 
-    spawnObject(mode){
-      if(mode==='air' && CFG.gameplay?.enableAir === false) return;
-      const div=document.createElement('div');
-      div.className='game-obj obj-move';
-      let type, content, posClass;
+   spawnObject(mode){
+  if(mode === 'air' && CFG.gameplay?.enableAir === false) return;
 
-      if(mode==='ground'){
-        type='bad';
-        content=this.randomItem(CFG.assets?.obstacles?.ground || ['🌲']);
-        posClass='pos-ground';
-        div.dataset.isObstacle="true";
-      }else{
-        type = Math.random()>0.5 ? 'good' : 'bad';
-        content = (type==='good')
-          ? this.randomItem(CFG.assets?.obstacles?.good || ['🌟'])
-          : this.randomItem(CFG.assets?.obstacles?.bad || ['🦅']);
-        posClass='pos-air';
+  const div = document.createElement('div');
+  div.className = 'game-obj obj-move';
+  let type, content, posClass;
+
+  const pickSafe = (arr, fallback=null) => {
+    if(!Array.isArray(arr)) return fallback;
+    const cleaned = arr.map(x => String(x ?? '').trim()).filter(Boolean);
+    if(!cleaned.length) return fallback;
+    return this.randomItem(cleaned);
+  };
+
+  if(mode === 'ground'){
+    type = 'bad';
+    content = pickSafe(CFG.assets?.obstacles?.ground, '🌲');
+    posClass = 'pos-ground';
+    div.dataset.isObstacle = "true";
+  }else{
+    type = Math.random() > 0.5 ? 'good' : 'bad';
+
+    if(type === 'good'){
+      content = pickSafe(CFG.assets?.obstacles?.good, null);
+      // если good пустой — пробуем bad
+      if(!content){
+        type = 'bad';
+        content = pickSafe(CFG.assets?.obstacles?.bad, null);
       }
+    }else{
+      content = pickSafe(CFG.assets?.obstacles?.bad, null);
+      // если bad пустой — пробуем good
+      if(!content){
+        type = 'good';
+        content = pickSafe(CFG.assets?.obstacles?.good, null);
+      }
+    }
 
-      renderContent(div, content);
-      div.dataset.type = type;
-      div.classList.add(posClass);
-      this.elObjs.appendChild(div);
+    // если оба массива пустые — вообще не спавним air-объект
+    if(!content) return;
 
-      setTimeout(()=>{ if(div.parentNode) div.remove(); }, 5000);
-    },
+    posClass = 'pos-air';
+  }
 
-    spawnFeedback(x,y,text,color){
-      const span=document.createElement('div');
-      span.className='floating-text';
-      span.textContent=text;
-      span.style.left=x+'px';
-      span.style.top=y+'px';
-      span.style.color=color;
-      document.getElementById('sky-area').appendChild(span);
-      setTimeout(()=>span.remove(), 800);
-    },
+  renderContent(div, content);
+  div.dataset.type = type;
+  div.classList.add(posClass);
+  this.elObjs.appendChild(div);
+
+  setTimeout(()=>{ if(div.parentNode) div.remove(); }, 5000);
+},
 
     mainLoop(){
       if(!this.isPlaying) return;
@@ -1221,9 +1240,7 @@
     document.getElementById('diff-easy').onclick   = ()=>Game.setDifficulty('easy');
     document.getElementById('diff-medium').onclick = ()=>Game.setDifficulty('medium');
     document.getElementById('diff-hard').onclick   = ()=>Game.setDifficulty('hard');
-if (!document.querySelector('.diff-btn.active')) {
-  Game.setDifficulty('medium');
-}
+Game.setDifficulty('medium');
     document.getElementById('btnStart').onclick = ()=>Game.showPrep();
     document.getElementById('btnAgain').onclick = ()=>location.reload();
   })();
