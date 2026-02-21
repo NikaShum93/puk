@@ -378,7 +378,7 @@
   }
 
   // ВАЖНО: JSON лежит в nikashum93/texts/data/<id>.json
-  const JSON_BASE = "https://nikashum93.github.io/texts/data/";
+  const JSON_BASES = ["https://nikashum93.github.io/texts/data/","https://nikashum93.github.io/data/"];
 
   function shuffle(arr){
     const a = arr.slice();
@@ -445,7 +445,7 @@
       gameover: 'GAME OVER',
       scoreLabel: 'Score: '
     },
-    gameplay: { winQuestions: 10 },
+    gameplay: { winQuestions: 10, enableAir: true, diffBaseSpawnMs: 8500, diffBaseMoveSpeed: 6.0, diffMedMult: 0.88, diffHardMult: 0.76 },
     assets: {
       hero: '🐑',
       mirrorHero: false,
@@ -570,7 +570,15 @@
     }
     if(!cfgId) return;
     try{
-      const res = await fetch(`${JSON_BASE}${encodeURIComponent(cfgId)}.json?v=${Date.now()}`, { cache:'no-store' });
+      let lastErr=null;
+      let res=null;
+      for(const base of JSON_BASES){
+        try{
+          res = await fetch(`${base}${encodeURIComponent(cfgId)}.json?v=${Date.now()}`, { cache:'no-store' });
+          if(res && res.ok) break;
+        }catch(e){ lastErr=e; }
+      }
+      if(!res || !res.ok) throw lastErr || new Error('Not found');
       const cfg = normalizeCfg(await res.json());
       CFG = mergeCfg(CFG, cfg || {});
       try{ const n=document.getElementById('cfgNote'); if(n) n.textContent=''; }catch(_e){}
@@ -783,19 +791,39 @@
     spawnTimer:null,
 
     setDifficulty(mode){
-      document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
-      const el = document.getElementById('diff-'+mode);
-      if(el) el.classList.add('active');
+      // Base is EASY; Medium/Hard are computed from multipliers
+      const gp = (CFG && CFG.gameplay) ? CFG.gameplay : {};
+      const baseSpawnMs = Number.isFinite(+gp.diffBaseSpawnMs) ? +gp.diffBaseSpawnMs : 8500; // ms between obstacles (easy)
+      const baseMoveSpeed = Number.isFinite(+gp.diffBaseMoveSpeed) ? +gp.diffBaseMoveSpeed : 6.0; // lower = slower world
 
-      let speed, spawn;
-      switch(mode){
-        case 'easy':   speed='4.5s'; spawn=6000; break;
-        case 'medium': speed='3.5s'; spawn=5000; break;
-        case 'hard':   speed='2.8s'; spawn=4000; break;
-        default:       speed='3.5s'; spawn=5000;
+      const medMult  = Number.isFinite(+gp.diffMedMult)  ? +gp.diffMedMult  : 0.88;
+      const hardMult = Number.isFinite(+gp.diffHardMult) ? +gp.diffHardMult : 0.76;
+
+      // helper
+      const clamp = (v,min,max)=>Math.max(min, Math.min(max, v));
+
+      let move = baseMoveSpeed;
+      let spawn = baseSpawnMs;
+
+      if(mode==='hard'){ move = baseMoveSpeed*hardMult; spawn = baseSpawnMs*hardMult; }
+      else if(mode==='medium'){ move = baseMoveSpeed*medMult; spawn = baseSpawnMs*medMult; }
+      else { /* easy */ }
+
+      // safety clamps (so nothing breaks)
+      move = clamp(move, 2.0, 20.0);
+      spawn = clamp(spawn, 1200, 20000);
+
+      document.querySelectorAll('.diff-btn').forEach(btn=>btn.classList.remove('active'));
+      document.querySelector(`[data-mode="${mode}"]`)?.classList.add('active');
+
+      difficulty=mode;
+      moveSpeedSec=move;
+      spawnInterval=spawn;
+
+      // input mode is slower by design (gives more time to type)
+      if(CFG.mode==='input'){
+        spawnInterval*=2.2;
       }
-      document.documentElement.style.setProperty('--move-speed', speed);
-      this.spawnInterval = spawn;
     },
 
     setupTutorialIcons(){
@@ -803,15 +831,22 @@
       const bl = document.getElementById('tut-bad-list');
       gl.innerHTML=''; bl.innerHTML='';
 
-      (CFG.assets?.obstacles?.good || []).forEach(a=>{
-        const d=document.createElement('div');
-        d.className='tut-icon-wrap';
-        renderContent(d, a);
-        gl.appendChild(d);
-      });
+      const airOn = (CFG.gameplay?.enableAir !== false);
 
-      const allBad = [...new Set([...(CFG.assets?.obstacles?.bad||[]), ...(CFG.assets?.obstacles?.ground||[])])];
-      allBad.forEach(a=>{
+      if(airOn){
+        (CFG.assets?.obstacles?.good || []).forEach(a=>{
+          const d=document.createElement('div');
+          d.className='tut-icon-wrap';
+          renderContent(d, a);
+          gl.appendChild(d);
+        });
+      }
+
+      const badArr = airOn
+        ? [...new Set([...(CFG.assets?.obstacles?.bad||[]), ...(CFG.assets?.obstacles?.ground||[])])]
+        : [...new Set([...(CFG.assets?.obstacles?.ground||[])])];
+
+      badArr.forEach(a=>{
         const d=document.createElement('div');
         d.className='tut-icon-wrap';
         renderContent(d, a);
@@ -873,21 +908,27 @@
       const activeDiff = (document.querySelector('.diff-btn.active')?.id || 'diff-medium').replace('diff-','');
       this.setDifficulty(activeDiff);
 
-      if((CFG.mode||'choice') === 'input') this.spawnInterval = Math.round(this.spawnInterval * 3);
+      if((CFG.mode||'choice') === 'input') this.spawnInterval = Math.round(this.spawnInterval * 2.2);
 
       if(this.mainInterval) clearInterval(this.mainInterval);
       this.mainInterval = setInterval(()=>this.mainLoop(), 50);
 
       if(this.spawnTimer) clearInterval(this.spawnTimer);
-      const firstDelay = ((CFG.mode||'choice')==='input') ? 4500 : 2500;
+      const firstDelay = ((CFG.mode||'choice')==='input') ? 6500 : 4200;
       setTimeout(()=>{
         if(!this.isPlaying) return;
         this.spawnObject('ground');
-        setTimeout(()=>{ if(this.isPlaying) this.spawnObject('air'); }, this.spawnInterval/2);
+        if(CFG.gameplay?.enableAir !== false){
+          if(CFG.gameplay?.enableAir !== false){
+          setTimeout(()=>{ if(this.isPlaying) this.spawnObject('air'); }, this.spawnInterval/2);
+        }
+        }
         this.spawnTimer = setInterval(()=>{
           if(!this.isPlaying) return;
           this.spawnObject('ground');
+          if(CFG.gameplay?.enableAir !== false){
           setTimeout(()=>{ if(this.isPlaying) this.spawnObject('air'); }, this.spawnInterval/2);
+        }
         }, this.spawnInterval);
       }, firstDelay);
 
@@ -895,6 +936,7 @@
     },
 
     spawnObject(mode){
+      if(mode==='air' && CFG.gameplay?.enableAir === false) return;
       const div=document.createElement('div');
       div.className='game-obj obj-move';
       let type, content, posClass;
