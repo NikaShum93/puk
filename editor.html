@@ -153,7 +153,7 @@
       transition:.12s;
     }
     .tab:hover{ transform:translateY(-1px); }
-    
+
     .tabPanel{display:none}
     .tabPanel.active{display:block}
     .tab.active{
@@ -170,7 +170,7 @@
       display:grid;
       grid-template-columns: 420px 1fr;
       gap:14px;
-      padding:14px 18px 18px 18px; /* bottom padding fixed */
+      padding:14px 18px 18px 18px;
     }
     @media (max-width: 980px){
       .wrap{max-height:none;}
@@ -253,7 +253,7 @@
       border-radius:12px;
       overflow:hidden;
       background:transparent;
-      margin:auto; /* center if right column taller */
+      margin:auto;
       position:relative;
     }
     .previewFrame{
@@ -334,9 +334,133 @@
       flex:none;
       background:rgba(255,255,255,.85);
     }
+
+    /* soft "no devtools" overlay */
+    .devtools-overlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      background:rgba(0,0,0,.86);
+      z-index:100000;
+    }
+    .devtools-card{
+      width:min(720px, 96vw);
+      background:#111;
+      border:2px solid rgba(255,255,255,.15);
+      border-radius:18px;
+      box-shadow:0 0 24px rgba(0,229,255,.25);
+      padding:18px 18px 16px;
+      color:#fff;
+      text-align:center;
+      font-family:'Montserrat',sans-serif;
+    }
+    .devtools-card h3{
+      margin:0 0 8px;
+      font-family:'Fredoka One',cursive;
+      font-weight:400;
+      letter-spacing:.04em;
+      font-size:28px;
+    }
+    .devtools-card p{
+      margin:0;
+      opacity:.9;
+      line-height:1.4;
+      font-weight:700;
+    }
+
+    /* ===== Password gate (simple) ===== */
+    body.locked { overflow:hidden; }
+    body.locked .wrap { display:none; }
+
+    .pass-overlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.86);
+      display:none;
+      align-items:center; justify-content:center;
+      z-index:110000;
+      padding:24px;
+    }
+    body.locked .pass-overlay{ display:flex; }
+
+    .pass-card{
+      width:min(520px, 96vw);
+      background:rgba(255,255,255,.96);
+      border-radius:18px;
+      border:2px solid rgba(0,229,255,.25);
+      box-shadow:0 0 24px rgba(0,229,255,.22);
+      padding:18px;
+      text-align:center;
+    }
+    .pass-card h3{
+      margin:0 0 8px;
+      font-family:'Fredoka One',cursive;
+      font-size:28px;
+    }
+    .pass-card p{
+      margin:0 0 12px;
+      font-weight:800;
+      opacity:.85;
+    }
+    .pass-row{
+      display:flex; gap:10px;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    .pass-input{
+      width:min(320px, 90vw);
+      padding:12px 14px;
+      border-radius:14px;
+      border:2px solid #ddd;
+      outline:none;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-align:center;
+      font-family:'Montserrat',sans-serif;
+    }
+    .pass-input:focus{
+      border-color:var(--primary);
+      box-shadow:0 0 10px rgba(0,229,255,.25);
+    }
+    .pass-btn{
+      border:none;
+      border-radius:14px;
+      padding:12px 14px;
+      cursor:pointer;
+      background:linear-gradient(45deg, var(--primary), #00B8D4);
+      color:white;
+      font-weight:900;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+    .pass-err{
+      margin-top:10px;
+      color:#c62828;
+      font-weight:900;
+      display:none;
+    }
   </style>
 </head>
 <body>
+
+  <!-- ===== Password gate ===== -->
+  <div class="pass-overlay" id="passOverlay" aria-hidden="true">
+    <div class="pass-card">
+      <h3>🔒 Доступ к редактору</h3>
+      <p>Введите пароль</p>
+
+      <div class="pass-row">
+        <input class="pass-input" id="passInput" type="password" placeholder="Пароль" autocomplete="off">
+        <button class="pass-btn" id="passBtn" type="button">Войти</button>
+      </div>
+
+      <div class="pass-err" id="passErr">Неверный пароль</div>
+    </div>
+  </div>
+
   <div class="bg-float" style="left:10%; animation-duration: 26s;">🐑</div>
   <div class="bg-float" style="left:80%; animation-duration: 30s; animation-delay:-7s;">🚀</div>
   <div class="bg-float" style="left:30%; animation-duration: 22s; animation-delay:-12s;">🪐</div>
@@ -350,7 +474,7 @@
           <div class="brandTitle">
             <h1 id="uiHeaderTitle">SHEEP RUN</h1>
             <div class="mini" id="uiHeaderMini">Редактор игры</div>
-            <div class="authorLine">@teachy_witchy</div>
+            <div class="authorLine">Ника Шум @teachy_witchy</div>
           </div>
         </div>
 
@@ -388,7 +512,7 @@
                 <label id="lblMode">Режим</label>
                 <select id="gameMode">
                   <option value="choice" selected>Кнопки (A/B)</option>
-<option value="input">Впиши ответ</option>
+                  <option value="input">Впиши ответ</option>
                 </select>
               </div>
               <div>
@@ -407,6 +531,29 @@
               <div>
                 <label id="lblWin">Сколько заданий до победы</label>
                 <input id="winQuestions" type="text" value="10" />
+              </div>
+            </div>
+
+            <!-- ===== NEW: auto speed (base = EASY) ===== -->
+            <div style="margin-top:10px">
+              <label id="lblSpawnBase">Пауза между препятствиями (EASY)</label>
+              <div class="rangeRow">
+                <input id="spawnBase" type="range" min="3" max="14" step="0.5" value="8.5" style="width:100%">
+                <div class="rangeVal"><span id="spawnBaseVal">8.5</span>s</div>
+              </div>
+              <div class="help" id="hSpawnAuto">
+                MEDIUM: <b><span id="spawnMedVal">7.5</span>s</b> • HARD: <b><span id="spawnHardVal">6.5</span>s</b>
+              </div>
+            </div>
+
+            <div style="margin-top:10px">
+              <label id="lblMoveBase">Скорость мира (EASY)</label>
+              <div class="rangeRow">
+                <input id="moveBase" type="range" min="2.5" max="10" step="0.1" value="6.0" style="width:100%">
+                <div class="rangeVal"><span id="moveBaseVal">6.0</span></div>
+              </div>
+              <div class="help" id="hMoveAuto">
+                MEDIUM: <b><span id="moveMedVal">5.3</span></b> • HARD: <b><span id="moveHardVal">4.6</span></b>
               </div>
             </div>
 
@@ -536,16 +683,81 @@
       </div>
     </div>
 
-    <footer>© 2026 Корпорация Геймификации Будущего • @teachy_witchy</footer>
+    <footer>© 2026 Ника Шум • @teachy_witchy</footer>
+
+    <div class="devtools-overlay" id="devtoolsOverlay" aria-hidden="true">
+      <div class="devtools-card">
+        <h3>🧙‍♀️ Режим учителя</h3>
+        <p>Этот редактор предназначен для создания игр.<br>Просматривать и копировать содержимое запрещено. Игра защищена авторским правом.</p>
+      </div>
+    </div>
+
   </div>
 
   <div class="toast" id="toast">Скопировано!</div>
 
 <script>
+  // ===== Password gate (simple, editable) =====
+  const ACCESS_PASSWORD = "WITCHY-2026"; // <-- поменяй как хочешь
+  const ACCESS_HOURS = 12; // можно 0 (тогда только на текущую вкладку)
+
+  (function passwordGate(){
+    const now = Date.now();
+    const key = "sheep_editor_access_until";
+    const until = Number(localStorage.getItem(key) || 0);
+
+    function lock(){
+      document.body.classList.add("locked");
+      setTimeout(()=>{ const i=document.getElementById('passInput'); if(i) i.focus(); }, 50);
+    }
+    function unlock(){
+      document.body.classList.remove("locked");
+    }
+
+    if(until && until > now) unlock();
+    else lock();
+
+    function tryLogin(){
+      const inp = document.getElementById("passInput");
+      const err = document.getElementById("passErr");
+      const val = (inp?.value || "").trim();
+
+      if(val === ACCESS_PASSWORD){
+        if(ACCESS_HOURS > 0){
+          localStorage.setItem(key, String(Date.now() + ACCESS_HOURS*3600*1000));
+        } else {
+          localStorage.removeItem(key);
+        }
+        if(err) err.style.display = "none";
+        if(inp) inp.value = "";
+        unlock();
+      } else {
+        if(err) err.style.display = "block";
+        if(inp) inp.select();
+      }
+    }
+
+    document.addEventListener("click", (e)=>{
+      if(e.target && e.target.id === "passBtn") tryLogin();
+    });
+
+    document.addEventListener("keydown", (e)=>{
+      if(document.body.classList.contains("locked") && e.key === "Enter") {
+        e.preventDefault(); tryLogin();
+      }
+    });
+  })();
+
   // ====== CONFIG ======
-  const BASE_MAIN = "https://nikashum93.github.io/puk/main.html";
+  // ВАЖНО: если ты будешь хостить main_autospeed.html на GitHub Pages,
+  // просто поменяй BASE_MAIN на новый URL.
+  const BASE_MAIN   = "https://nikashum93.github.io/puk/main.html";
   const ENDPOINT    = "https://server-kjnn.onrender.com/publish";
   const PUBLISH_KEY = "nika_read_pub_2025";
+
+  // ====== Difficulty multipliers (auto) ======
+  const DIFF_MED_MULT  = 0.88;
+  const DIFF_HARD_MULT = 0.76;
 
   // ====== i18n ======
   const I18N = {
@@ -556,6 +768,8 @@
       tGame:"Настройки", tUi:"Тексты интерфейса", tAssets:"Персонаж и предметы", tAudio:"Звуки", tQ:"Задания",
       title:"Название", start:"Кнопка Старт", again:"Кнопка Повтор", over:"Текст при проигрыше", score:"Подпись счёта",
       q:"Вопрос", c:"Верно", w:"Неверно",
+      spawnBase:"Пауза между препятствиями (EASY)",
+      moveBase:"Скорость мира (EASY)",
       assetsHelp:"Можно писать эмодзи (🐑) или вставлять ссылку на картинку/гиф (https://...). Списки — через запятую или с новой строки.",
       audioHelp:"Музыка и эффекты — по ссылкам (mp3/ogg). Можно оставить пустым и использовать базовые.",
       qHelp:"Вставляй из Excel: каждая строка = одно задание. В “Верно” можно несколько вариантов через |. В режиме “Впиши ответ” колонка “Неверно” не нужна.",
@@ -570,6 +784,8 @@
       tGame:"Settings", tUi:"UI texts", tAssets:"Hero & items", tAudio:"Audio", tQ:"Tasks",
       title:"Title", start:"Start button", again:"Again button", over:"Lose text", score:"Score label",
       q:"Question", c:"Correct", w:"Wrong",
+      spawnBase:"Obstacle interval (EASY)",
+      moveBase:"World speed (EASY)",
       assetsHelp:"Use emoji (🐑) or an image/gif URL (https://...). Lists: commas or new lines.",
       audioHelp:"Music & SFX via URLs (mp3/ogg). You can leave empty to use basic sounds.",
       qHelp:"Paste from Excel: one line = one task. “Correct” can include multiple options via |. In input mode, “Wrong” is not required.",
@@ -599,6 +815,9 @@
     $('lblWin').textContent = t.win;
     $('lblMath').textContent = t.math;
     $('lblTransparent').textContent = t.transparent;
+
+    if($('lblSpawnBase')) $('lblSpawnBase').textContent = t.spawnBase;
+    if($('lblMoveBase')) $('lblMoveBase').textContent = t.moveBase;
 
     $('tUi').textContent = t.tUi;
     $('lTitle').textContent = t.title;
@@ -675,7 +894,22 @@
     };
 
     const winQuestions = parseInt(($('winQuestions').value || '10'), 10);
-    const gameplay = { winQuestions: Number.isFinite(winQuestions) ? winQuestions : 10 };
+
+    // ===== NEW: base values (EASY) =====
+    const spawnBaseSec = parseFloat(($('spawnBase')?.value || '8.5'));  // seconds
+    const moveBase     = parseFloat(($('moveBase')?.value || '6.0'));   // speed factor
+
+    const gameplay = {
+      winQuestions: Number.isFinite(winQuestions) ? winQuestions : 10,
+
+      // base = EASY
+      diffBaseSpawnMs: Math.round((Number.isFinite(spawnBaseSec) ? spawnBaseSec : 8.5) * 1000),
+      diffBaseMoveSpeed: Number.isFinite(moveBase) ? moveBase : 6.0,
+
+      // multipliers for auto-calc
+      diffMedMult: DIFF_MED_MULT,
+      diffHardMult: DIFF_HARD_MULT
+    };
 
     const assets = {
       hero: $('hero').value || '🐑',
@@ -791,7 +1025,7 @@
     const payload = {
       id,
       mode: "json",
-      folder: "texts/data",
+      folder: "data",
       content: JSON.stringify(cfg, null, 2)
     };
 
@@ -860,10 +1094,29 @@
     tabs.forEach(b=>b.addEventListener('click', ()=>activate(b.dataset.tab)));
   })();
 
+  // ===== NEW: show computed values in UI =====
+  function updateSpeedUI(){
+    const s = parseFloat($('spawnBase')?.value || '8.5');
+    const m = parseFloat($('moveBase')?.value || '6.0');
+
+    if($('spawnBaseVal')) $('spawnBaseVal').textContent = String(s);
+    if($('spawnMedVal'))  $('spawnMedVal').textContent  = (s * DIFF_MED_MULT).toFixed(1);
+    if($('spawnHardVal')) $('spawnHardVal').textContent = (s * DIFF_HARD_MULT).toFixed(1);
+
+    if($('moveBaseVal')) $('moveBaseVal').textContent = String(m.toFixed(1));
+    if($('moveMedVal'))  $('moveMedVal').textContent  = (m * DIFF_MED_MULT).toFixed(1);
+    if($('moveHardVal')) $('moveHardVal').textContent = (m * DIFF_HARD_MULT).toFixed(1);
+  }
+
   // init
   mountEmojiBar();
   applyLang($('uiLang').value);
   $('fontSizeVal').textContent = $('fontSize').value;
+
+  updateSpeedUI();
+
+  $('spawnBase')?.addEventListener('input', ()=>{ updateSpeedUI(); queuePreview(); });
+  $('moveBase')?.addEventListener('input',  ()=>{ updateSpeedUI(); queuePreview(); });
 
   $('preview').addEventListener('load', ()=>{
     try{
@@ -891,13 +1144,14 @@
   $('uiLang').addEventListener('change', ()=>{
     const editorLang = $('uiLang').value;
     applyLang(editorLang);
-    // editor language does NOT change game language automatically
     queuePreview();
   });
 
+  // default for smart replace when switching language of game UI
+  window.__lastGameLang = $('gameLang').value || 'ru';
+
   $('gameLang').addEventListener('change', ()=>{
     const lang = $('gameLang').value;
-    // auto-fill base UI texts ONLY if fields still equal previous base defaults
     const prev = window.__lastGameLang || 'ru';
     const DEF = {
       ru:{start:'ИГРАТЬ', again:'ЕЩЁ РАЗ', over:'ИГРА ОКОНЧЕНА', score:'Счёт: '},
@@ -923,6 +1177,40 @@
     window.__lastGameLang = lang;
     queuePreview();
   });
+
+  // ====== soft protection (not bulletproof): disable context menu & common devtools shortcuts ======
+  (function(){
+    const overlay = document.getElementById('devtoolsOverlay');
+    const show = ()=>{ if(overlay) overlay.style.display='flex'; };
+    const hide = ()=>{ if(overlay) overlay.style.display='none'; };
+
+    document.addEventListener('contextmenu', (e)=>{ e.preventDefault(); toast('🚫'); }, {capture:true});
+
+    document.addEventListener('keydown', (e)=>{
+      const key = (e.key || '').toLowerCase();
+      const isMac = /mac|iphone|ipad|ipod/i.test(navigator.platform);
+      if(e.key === 'F12'){ e.preventDefault(); show(); return; }
+      const ctrl = isMac ? e.metaKey : e.ctrlKey;
+
+      if(ctrl && (key === 'u' || key === 's')){ e.preventDefault(); show(); return; }
+      if(ctrl && e.shiftKey && (key === 'i' || key === 'j' || key === 'c')){ e.preventDefault(); show(); return; }
+      if(ctrl && (key === 'i')){ e.preventDefault(); show(); return; }
+    }, {capture:true});
+
+    let last = 0;
+    function tick(){
+      const now = Date.now();
+      if(now - last < 250) return;
+      last = now;
+      const w = Math.abs(window.outerWidth - window.innerWidth);
+      const h = Math.abs(window.outerHeight - window.innerHeight);
+      const open = (w > 160) || (h > 160);
+      if(open) show(); else hide();
+    }
+    window.addEventListener('resize', tick);
+    setInterval(tick, 900);
+  })();
+
 </script>
 </body>
 </html>
