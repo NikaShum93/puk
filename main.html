@@ -1221,8 +1221,9 @@
     document.getElementById('diff-easy').onclick   = ()=>Game.setDifficulty('easy');
     document.getElementById('diff-medium').onclick = ()=>Game.setDifficulty('medium');
     document.getElementById('diff-hard').onclick   = ()=>Game.setDifficulty('hard');
-    Game.setDifficulty('medium');
-
+if (!document.querySelector('.diff-btn.active')) {
+  Game.setDifficulty('medium');
+}
     document.getElementById('btnStart').onclick = ()=>Game.showPrep();
     document.getElementById('btnAgain').onclick = ()=>location.reload();
   })();
